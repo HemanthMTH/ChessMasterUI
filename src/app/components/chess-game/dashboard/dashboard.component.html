@@ -53,7 +53,7 @@
 </div>
 
 <!-- Results Container -->
-<div class="container mt-5" *ngIf="fenForChessBoard">
+<div class="container mt-5" *ngIf="currentPGN">
   <div class="row justify-content-center">
     <div class="col-md-10 col-lg-8">
       <div class="card">
@@ -63,7 +63,7 @@
         <!-- Card Body -->
         <div class="card-body">
           <!-- Render the chess board component with the PGN or FEN data -->
-          <app-chess-board [fen]="fenForChessBoard"></app-chess-board>
+          <app-chess-board [pgn]="currentPGN"></app-chess-board>
         </div>
       </div>
     </div>

@@ -9,7 +9,7 @@ import { ChessGameService } from '../../../services/chess-game.service';
 export class DashboardComponent {
   pgnFile: File | null = null;
   isLoading = false;
-  fenForChessBoard: string | null = null;  // Store FEN for chessboard
+  currentPGN!: string;  // Store FEN for chessboard
 
   constructor(private chessGameService: ChessGameService) {}
 
@@ -23,7 +23,7 @@ export class DashboardComponent {
       this.chessGameService.uploadGameFile(this.pgnFile).subscribe(
         (res: ChessGame) => {
           console.log('Game uploaded:', res);
-          this.fenForChessBoard = res.fen; // Set PGN for child component
+          this.currentPGN = res.pgn; // Set PGN for child component
           this.isLoading = false;
         },
         (err) => {

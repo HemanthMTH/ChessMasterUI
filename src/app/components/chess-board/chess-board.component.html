@@ -1,1 +1,52 @@
-<div #board class="chessboard"></div>
+<!-- Game Info -->
+<!-- <div class="container my-3">
+    <div class="row">
+      <div class="col text-center">
+        <h4>{{ viewer.game.players.white.name }} vs {{ viewer.game.players.black.name }}</h4>
+        <p>
+          {{ viewer.game.metadata.result }} - {{ viewer.game.metadata.externalLink }} 
+        </p>
+      </div>
+    </div>
+  </div> -->
+
+<!-- Controls -->
+<div class="container my-3">
+    <div class="row">
+      <div class="col text-center">
+        <button class="btn btn-primary mx-1" (click)="goTo('first')">
+          <i class="fas fa-step-backward"></i> First
+        </button>
+        <button class="btn btn-primary mx-1" (click)="goTo('prev')">
+          <i class="fas fa-chevron-left"></i> Previous
+        </button>
+        <button class="btn btn-primary mx-1" (click)="goTo('next')">
+          Next <i class="fas fa-chevron-right"></i>
+        </button>
+        <button class="btn btn-primary mx-1" (click)="goTo('last')">
+          Last <i class="fas fa-step-forward"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Chessboard and Move List -->
+  <div class="container">
+    <div class="row">
+      <!-- Chessboard Column -->
+      <div class="col-md-6 col-lg-5">
+        <div class="board-container">
+          <div #boardContainer class="chessboard"></div>
+        </div>
+      </div>
+  
+      <!-- Move List Column -->
+      <div class="col-md-6 col-lg-7">
+        <div class="move-list-container">
+          <h5>Moves</h5>
+          <div class="move-list" [innerHTML]="renderedMoves"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  

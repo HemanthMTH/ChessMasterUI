@@ -1,51 +1,109 @@
-import { AfterViewInit, Component, ElementRef, Input, ViewChild } from '@angular/core';
+import {
+  AfterViewInit,
+  ChangeDetectorRef,
+  Component,
+  ElementRef,
+  Input,
+  Renderer2,
+  ViewChild,
+} from '@angular/core';
 
-import { Chess } from 'chess.js';
 import { Chessground } from 'chessground';
+import { Opts, Path, PgnViewer } from 'pgn-viewer';
 
 @Component({
   selector: 'app-chess-board',
   templateUrl: './chess-board.component.html',
-  styleUrls: ['./chess-board.component.scss']
+  styleUrls: ['./chess-board.component.scss'],
 })
 export class ChessBoardComponent implements AfterViewInit {
-  @Input() fen: string = '';
+  @Input() pgn!: string;
 
-  @ViewChild('board', { static: false }) boardElement!: ElementRef;
-  private chess = new Chess();
-  private chessground: any;
+  @ViewChild('boardContainer', { static: false }) boardContainer!: ElementRef;
+  viewer!: PgnViewer;
+  renderedMoves: string = '';
+
+  constructor(private renderer: Renderer2, private cdr: ChangeDetectorRef) {}
 
   ngAfterViewInit(): void {
-    this.chessground = Chessground(this.boardElement.nativeElement, {
-      draggable: {
-        enabled: true,
-        showGhost: true,
+    const opts: Opts = {
+      pgn: this.pgn,
+      orientation: 'white',
+      showPlayers: true,
+      showMoves: 'right',
+      showClocks: false,
+      showControls: true,
+      initialPly: 1,
+      scrollToMove: true,
+      drawArrows: true,
+      lichess: false,
+      classes: 'my-custom-class',
+      translate: (key: string) => {
+        const translations: { [key: string]: string } = {
+          first: 'First',
+          prev: 'Previous',
+          next: 'Next',
+          last: 'Last',
+        };
+        return translations[key] || key;
       },
-      movable: {
-        free: false,
-        color: 'both',
-        events: {
-          after: this.onMove.bind(this),
+    };
+
+    this.viewer = new PgnViewer(opts);
+
+    // Initialize the viewer
+    this.viewer.setGround(
+      Chessground(this.boardContainer.nativeElement, {
+        draggable: {
+          enabled: true,
+          showGhost: true,
         },
-      },
-      highlight: {
-        lastMove: true,
-        check: true,
-      },
-      fen: this.fen,
+        movable: {
+          free: false,
+          color: 'both',
+        },
+        highlight: {
+          lastMove: true,
+          check: true,
+        },
+      })
+    );
+
+    this.viewer.goTo('first');
+
+    // Render the moves and set up event listeners
+    this.renderMoves();
+    this.addMoveClickListeners();
+  }
+
+  renderMoves() {
+    const moveDom = (move: any) => {
+      const isActive = move.path.path === this.viewer.path.path ? 'active' : '';
+      return `<span data-ply="${move.ply}" id="move-${move.path.path}" class="move ${isActive}">${move.san}</span>`;
+    };
+
+    this.renderedMoves = this.viewer.game.mainline
+      .map((move: any) => moveDom(move))
+      .join(' ');
+
+    // Trigger change detection
+    this.cdr.detectChanges();
+  }
+
+  addMoveClickListeners() {
+    const moves = this.boardContainer.nativeElement.parentElement.querySelectorAll('.move');
+    moves.forEach((moveElement: any) => {
+      this.renderer.listen(moveElement, 'click', (event) => {
+        const pathStr = moveElement.getAttribute('id').replace('move-', '');
+        const path = new Path(pathStr);
+        this.viewer.toPath(path);
+        this.renderMoves(); // Refresh move highlights
+      });
     });
   }
 
-  onMove(from: string, to: string): void {
-    const move = this.chess.move({ from, to, promotion: 'q' });
-
-    if (move === null) {
-      // Invalid move, revert
-      this.chessground.set({ fen: this.chess.fen() });
-    } else {
-      // Valid move, update the board
-      this.chessground.set({ fen: this.chess.fen() });
-      // Handle additional logic, such as AI move or game over checks
-    }
+  goTo(position: 'first' | 'prev' | 'next' | 'last') {
+    this.viewer.goTo(position);
+    this.renderMoves(); // Refresh move highlights
   }
 }
