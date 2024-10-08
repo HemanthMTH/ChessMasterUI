@@ -8,8 +8,8 @@ import { ChessGameService } from '../../../services/chess-game.service';
 })
 export class DashboardComponent {
   pgnFile: File | null = null;
-  analysisResult: string = '';
-  games: ChessGame[] = [];
+  isLoading = false;
+  fenForChessBoard: string | null = null;  // Store FEN for chessboard
 
   constructor(private chessGameService: ChessGameService) {}
 
@@ -19,26 +19,18 @@ export class DashboardComponent {
 
   uploadGameFile() {
     if (this.pgnFile) {
-      this.chessGameService.uploadGameFile(this.pgnFile).subscribe((res) => {
-        console.log('Game uploaded:', res);
-        this.getAllGames(); // Refresh the list of games
-      });
+      this.isLoading = true;
+      this.chessGameService.uploadGameFile(this.pgnFile).subscribe(
+        (res: ChessGame) => {
+          console.log('Game uploaded:', res);
+          this.fenForChessBoard = res.fen; // Set PGN for child component
+          this.isLoading = false;
+        },
+        (err) => {
+          console.error('Upload failed:', err);
+          this.isLoading = false;
+        }
+      );
     }
-  }
-
-  getAllGames() {
-    this.chessGameService.getAllGames().subscribe((res: ChessGame[]) => {
-      this.games = res;
-    });
-  }
-
-  analyzeGame(gameId: string) {
-    this.chessGameService.analyzeGame(gameId).subscribe((res: any) => {
-      this.analysisResult = res.BestMove;
-    });
-  }
-
-  ngOnInit() {
-    this.getAllGames(); // Load the list of games when the component is initialized
   }
 }

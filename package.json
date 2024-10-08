@@ -18,7 +18,11 @@
     "@angular/platform-browser": "^14.2.0",
     "@angular/platform-browser-dynamic": "^14.2.0",
     "@angular/router": "^14.2.0",
+    "@types/chess.js": "^0.13.7",
     "bootstrap": "^5.3.3",
+    "chess.js": "^1.0.0-beta.8",
+    "chessground": "^9.1.1",
+    "pgn-viewer": "^1.0.49",
     "rxjs": "~7.5.0",
     "tslib": "^2.3.0",
     "zone.js": "~0.11.4"
