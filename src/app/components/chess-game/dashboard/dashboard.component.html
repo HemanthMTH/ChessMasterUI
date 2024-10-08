@@ -1,71 +1,55 @@
 <div class="container mt-5">
-  <div class="row justify-content-center">
-    <div class="col-md-8">
-      <div class="card">
-        <!-- Card Header -->
-        <div class="card-header">
-          Chess Game Upload & Analysis
+  <!-- Card for Chess Game Upload -->
+  <div class="card mx-auto">
+    <div class="card-header">
+      Chess Game Upload & Analysis
+    </div>
+
+    <div class="card-body">
+      <p class="text-muted mb-4">
+        Upload a PGN file containing a chess game. Our system will analyze the game and provide the best move recommendation.
+      </p>
+
+      <form>
+        <div class="alert alert-info">
+          <strong>Note:</strong> Please ensure you're uploading files in the supported format: <strong>.pgn</strong>
         </div>
 
-        <!-- Card Body -->
-        <div class="card-body">
-          <p class="text-muted mb-4">
-            Upload a PGN file containing a chess game. Our system will analyze the game and provide the best move recommendation.
-          </p>
-
-          <form>
-            <!-- Supported Formats Note -->
-            <div class="mb-3">
-              <div class="alert alert-info">
-                <strong>Note:</strong> Please ensure you're uploading files in the supported format: <strong>.pgn</strong>
-              </div>
-            </div>
-
-            <!-- File Input, Icon, & Button Row -->
-            <div class="d-flex align-items-center justify-content-between mb-3">
-              <div class="flex-grow-1 d-flex align-items-center mr-3 file-input-container w-75">
-                <input
-                  type="file"
-                  class="form-control custom-file-input"
-                  id="fileInput"
-                  accept=".pgn"
-                  (change)="onFileSelected($event)"
-                />
-              </div>
-              <button
-                type="button"
-                class="btn btn-success"
-                (click)="uploadGameFile()"
-                [disabled]="!pgnFile || isLoading"
-              >
-                Upload
-              </button>
-
-              <div *ngIf="isLoading" class="spinner-border text-success ml-2" role="status">
-                <span class="sr-only">Uploading...</span>
-              </div>
-            </div>
-          </form>
+        <!-- File Input & Upload Button -->
+        <div class="input-group mb-3">
+          <input
+            type="file"
+            class="form-control"
+            id="fileInput"
+            accept=".pgn"
+            (change)="onFileSelected($event)"
+          />
+          <button
+            type="button"
+            class="btn btn-success"
+            (click)="uploadGameFile()"
+            [disabled]="!pgnFile || isLoading"
+          >
+            Upload
+          </button>
         </div>
-      </div>
+
+        <!-- Spinner while loading -->
+        <div *ngIf="isLoading" class="spinner-border text-success" role="status">
+          <span class="sr-only">Uploading...</span>
+        </div>
+      </form>
     </div>
   </div>
-</div>
 
-<!-- Results Container -->
-<div class="container mt-5" *ngIf="currentPGN">
-  <div class="row justify-content-center">
-    <div class="col-md-10 col-lg-8">
-      <div class="card">
-        <!-- Card Header -->
-        <div class="card-header">Uploaded Chess Game</div>
+  <!-- Card for Uploaded Chess Game and Board -->
+  <div class="card mx-auto mt-4" *ngIf="currentPGN">
+    <div class="card-header">
+      Uploaded Chess Game
+    </div>
 
-        <!-- Card Body -->
-        <div class="card-body">
-          <!-- Render the chess board component with the PGN or FEN data -->
-          <app-chess-board [pgn]="currentPGN"></app-chess-board>
-        </div>
-      </div>
+    <div class="card-body">
+      <app-chess-board [pgn]="currentPGN"></app-chess-board>
     </div>
   </div>
 </div>
