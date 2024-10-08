@@ -1,0 +1,18 @@
+<div class="container mt-5">
+  <h2>Upload Chess Game</h2>
+  <input type="file" (change)="onFileSelected($event)" />
+  <button class="btn btn-primary mt-3" (click)="uploadGameFile()">Upload PGN File</button>
+
+  <h2 class="mt-5">Analyze Chess Game</h2>
+  <ul class="list-group">
+    <li class="list-group-item" *ngFor="let game of games">
+      {{ game.pgn }}
+      <button class="btn btn-success float-right" (click)="analyzeGame(game.id)">Analyze</button>
+    </li>
+  </ul>
+
+  <div *ngIf="analysisResult">
+    <h3>Best Move Analysis</h3>
+    <p>{{ analysisResult }}</p>
+  </div>
+</div>

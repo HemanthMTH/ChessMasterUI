@@ -1,0 +1,50 @@
+<div class="container mt-5">
+  <h2>Register</h2>
+  <form [formGroup]="registerForm" (ngSubmit)="onSubmit()">
+    <div class="form-group">
+      <label for="fullName">Full Name</label>
+      <input
+        formControlName="fullName"
+        class="form-control"
+        [ngClass]="{
+          'is-invalid': registerForm.get('fullName')?.invalid && registerForm.get('fullName')?.touched
+        }"
+      />
+      <div *ngIf="registerForm.get('fullName')?.invalid && registerForm.get('fullName')?.touched" class="text-danger">
+        Full Name is required.
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label for="email">Email</label>
+      <input
+        formControlName="email"
+        class="form-control"
+        type="email"
+        [ngClass]="{
+          'is-invalid': registerForm.get('email')?.invalid && registerForm.get('email')?.touched
+        }"
+      />
+      <div *ngIf="registerForm.get('email')?.invalid && registerForm.get('email')?.touched" class="text-danger">
+        Email is required and must be valid.
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label for="password">Password</label>
+      <input
+        formControlName="password"
+        class="form-control"
+        type="password"
+        [ngClass]="{
+          'is-invalid': registerForm.get('password')?.invalid && registerForm.get('password')?.touched
+        }"
+      />
+      <div *ngIf="registerForm.get('password')?.invalid && registerForm.get('password')?.touched" class="text-danger">
+        Password is required (min 6 characters).
+      </div>
+    </div>
+
+    <button type="submit" class="btn btn-primary" [disabled]="registerForm.invalid">Register</button>
+  </form>
+</div>
