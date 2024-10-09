@@ -1,15 +1,8 @@
-import {
-  AfterViewInit,
-  ChangeDetectorRef,
-  Component,
-  ElementRef,
-  Input,
-  Renderer2,
-  ViewChild,
-} from '@angular/core';
-
+import { AfterViewInit, ChangeDetectorRef, Component, ElementRef, Renderer2, ViewChild } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
 import { Chessground } from 'chessground';
 import { Opts, Path, PgnViewer } from 'pgn-viewer';
+import { ChessGameService } from '../../services/chess-game.service';
 
 @Component({
   selector: 'app-chess-board',
@@ -17,41 +10,50 @@ import { Opts, Path, PgnViewer } from 'pgn-viewer';
   styleUrls: ['./chess-board.component.scss'],
 })
 export class ChessBoardComponent implements AfterViewInit {
-  @Input() pgn!: string;
-
   @ViewChild('boardContainer', { static: false }) boardContainer!: ElementRef;
   viewer!: PgnViewer;
   renderedMoves: string = '';
+  pgn: string | null = null;  // Store PGN for the game
 
-  constructor(private renderer: Renderer2, private cdr: ChangeDetectorRef) {}
+  constructor(
+    private route: ActivatedRoute,
+    private chessGameService: ChessGameService,
+    private renderer: Renderer2,
+    private cdr: ChangeDetectorRef
+  ) {}
 
   ngAfterViewInit(): void {
+    this.route.params.subscribe(params => {
+      const gameId = params['id'];
+      this.fetchGame(gameId);  // Fetch PGN for the game using the ID
+    });
+  }
+
+  fetchGame(gameId: string) {
+    this.chessGameService.getGame(gameId).subscribe((game) => {
+      this.pgn = game.pgn;
+      this.initializeChessBoard();  // Initialize the board once PGN is fetched
+    });
+  }
+
+  initializeChessBoard() {
     const opts: Opts = {
-      pgn: this.pgn,
+      pgn: this.pgn!,
       orientation: 'white',
       showPlayers: true,
       showMoves: 'right',
-      showClocks: false,
+      showClocks: true,
       showControls: true,
       initialPly: 1,
       scrollToMove: true,
       drawArrows: true,
       lichess: false,
       classes: 'my-custom-class',
-      translate: (key: string) => {
-        const translations: { [key: string]: string } = {
-          first: 'First',
-          prev: 'Previous',
-          next: 'Next',
-          last: 'Last',
-        };
-        return translations[key] || key;
-      },
     };
 
     this.viewer = new PgnViewer(opts);
 
-    // Initialize the viewer
+    // Initialize the viewer with Chessground
     this.viewer.setGround(
       Chessground(this.boardContainer.nativeElement, {
         draggable: {
@@ -59,7 +61,7 @@ export class ChessBoardComponent implements AfterViewInit {
           showGhost: true,
         },
         movable: {
-          free: false,
+          free: true,
           color: 'both',
         },
         highlight: {
@@ -70,8 +72,6 @@ export class ChessBoardComponent implements AfterViewInit {
     );
 
     this.viewer.goTo('first');
-
-    // Render the moves and set up event listeners
     this.renderMoves();
     this.addMoveClickListeners();
   }
@@ -86,24 +86,23 @@ export class ChessBoardComponent implements AfterViewInit {
       .map((move: any) => moveDom(move))
       .join(' ');
 
-    // Trigger change detection
-    this.cdr.detectChanges();
+    this.cdr.detectChanges();  // Trigger change detection
   }
 
   addMoveClickListeners() {
     const moves = this.boardContainer.nativeElement.parentElement.querySelectorAll('.move');
     moves.forEach((moveElement: any) => {
-      this.renderer.listen(moveElement, 'click', (event) => {
+      this.renderer.listen(moveElement, 'click', () => {
         const pathStr = moveElement.getAttribute('id').replace('move-', '');
         const path = new Path(pathStr);
         this.viewer.toPath(path);
-        this.renderMoves(); // Refresh move highlights
+        this.renderMoves();  // Refresh move highlights
       });
     });
   }
 
   goTo(position: 'first' | 'prev' | 'next' | 'last') {
     this.viewer.goTo(position);
-    this.renderMoves(); // Refresh move highlights
+    this.renderMoves();  // Refresh move highlights
   }
 }

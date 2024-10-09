@@ -1,4 +1,5 @@
 import { Component } from '@angular/core';
+import { Router } from '@angular/router';
 import { ChessGame } from 'src/app/models/chess-game';
 import { ChessGameService } from '../../../services/chess-game.service';
 
@@ -9,9 +10,9 @@ import { ChessGameService } from '../../../services/chess-game.service';
 export class DashboardComponent {
   pgnFile: File | null = null;
   isLoading = false;
-  currentPGN!: string;  // Store FEN for chessboard
+   // Store FEN for chessboard
 
-  constructor(private chessGameService: ChessGameService) {}
+  constructor(private chessGameService: ChessGameService, private router: Router) {}
 
   onFileSelected(event: any) {
     this.pgnFile = event.target.files[0];
@@ -23,8 +24,8 @@ export class DashboardComponent {
       this.chessGameService.uploadGameFile(this.pgnFile).subscribe(
         (res: ChessGame) => {
           console.log('Game uploaded:', res);
-          this.currentPGN = res.pgn; // Set PGN for child component
           this.isLoading = false;
+          this.router.navigate(['/dashboard']);
         },
         (err) => {
           console.error('Upload failed:', err);

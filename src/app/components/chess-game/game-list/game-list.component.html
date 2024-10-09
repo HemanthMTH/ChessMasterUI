@@ -1,0 +1,25 @@
+<div class="container game-list-container mt-4">
+  <!-- List of Games -->
+  <div *ngFor="let game of games" class="game-row d-flex p-2 bg-light mb-2 align-items-center game-item" (click)="viewGame(game.id)">
+    <!-- Players Info -->
+    <div class="players-section">
+      <span class="d-block player-info white-player"><strong>{{ game.playerNameWhite }}</strong> ({{ game.whiteElo }})</span>
+      <span class="d-block player-info black-player"><strong>{{ game.playerNameBlack }}</strong> ({{ game.blackElo }})</span>
+    </div>
+
+    <!-- Result -->
+    <div class="result-section text-center mx-3">
+      <span class="game-result">{{ game.result }}</span>
+    </div>
+
+    <!-- Moves -->
+    <div class="moves-section text-center mx-3">
+      <span class="game-moves">{{ game.pgn.split(' ').length / 2 | number: '1.0-0' }} moves</span>
+    </div>
+
+    <!-- Date -->
+    <div class="date-section text-center ml-auto">
+      <span class="game-date">{{ game.gameDate | date: 'MMM d, yyyy' }}</span>
+    </div>
+  </div>
+</div>

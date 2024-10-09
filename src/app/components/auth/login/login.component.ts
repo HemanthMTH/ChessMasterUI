@@ -28,7 +28,7 @@ export class LoginComponent {
       this.authService.login(loginData).subscribe(
         (res: any) => {
           this.authService.saveToken(res.token); // Store the token
-          this.router.navigate(['/dashboard']); // Redirect to home
+          this.router.navigate(['/upload']); // Redirect to home
         },
         (err) => {
           alert('Login failed');

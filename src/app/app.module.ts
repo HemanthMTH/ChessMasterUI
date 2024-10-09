@@ -9,7 +9,9 @@ import { LoginComponent } from './components/auth/login/login.component';
 import { RegisterComponent } from './components/auth/register/register.component';
 import { ChessBoardComponent } from './components/chess-board/chess-board.component';
 import { DashboardComponent } from './components/chess-game/dashboard/dashboard.component';
+import { GameListComponent } from './components/chess-game/game-list/game-list.component';
 import { AuthInterceptor } from './interceptors/auth.interceptor';
+
 
 
 @NgModule({
@@ -19,6 +21,7 @@ import { AuthInterceptor } from './interceptors/auth.interceptor';
     RegisterComponent,
     DashboardComponent,
     ChessBoardComponent,
+    GameListComponent,
   ],
   imports: [
     BrowserModule,

@@ -1,0 +1,57 @@
+.game-list-container {
+    max-width: 900px;
+    margin: 0 auto;
+  }
+  
+  .game-item {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    transition: background-color 0.2s ease;
+    padding: 10px;
+  }
+  
+  .game-item:hover {
+    background-color: #e9ecef !important;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1) !important;
+  }
+  
+  .players-section {
+    flex: 2;
+  }
+  
+  .player-info {
+    display: flex;
+    align-items: center;
+  }
+  
+  .white-player {
+    color: #000;
+  }
+  
+  .black-player {
+    color: #333;
+  }
+  
+  .result-section,
+  .moves-section,
+  .date-section {
+    flex: 1;
+  }
+  
+  .game-result {
+    font-weight: bold;
+  }
+  
+  .game-moves {
+    font-size: 14px;
+    color: #555;
+  }
+  
+  .game-date {
+    font-size: 13px;
+    color: #999;
+  }
+  
