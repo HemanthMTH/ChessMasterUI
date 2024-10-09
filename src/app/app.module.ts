@@ -11,6 +11,8 @@ import { ChessBoardComponent } from './components/chess-board/chess-board.compon
 import { DashboardComponent } from './components/chess-game/dashboard/dashboard.component';
 import { GameListComponent } from './components/chess-game/game-list/game-list.component';
 import { AuthInterceptor } from './interceptors/auth.interceptor';
+import { PlayerStripComponent } from './components/chess-board/player-strip/player-strip.component';
+import { MoveListComponent } from './components/chess-board/move-list/move-list.component';
 
 
 
@@ -22,6 +24,8 @@ import { AuthInterceptor } from './interceptors/auth.interceptor';
     DashboardComponent,
     ChessBoardComponent,
     GameListComponent,
+    PlayerStripComponent,
+    MoveListComponent,
   ],
   imports: [
     BrowserModule,

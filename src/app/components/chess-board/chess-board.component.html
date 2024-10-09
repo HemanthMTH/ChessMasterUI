@@ -1,38 +1,47 @@
-<!-- Controls -->
-<div class="container my-3">
-  <div class="row">
-    <div class="col text-center">
-      <button class="btn btn-primary mx-1" (click)="goTo('first')">
-        <i class="fas fa-step-backward"></i> First
-      </button>
-      <button class="btn btn-primary mx-1" (click)="goTo('prev')">
-        <i class="fas fa-chevron-left"></i> Previous
-      </button>
-      <button class="btn btn-primary mx-1" (click)="goTo('next')">
-        Next <i class="fas fa-chevron-right"></i>
-      </button>
-      <button class="btn btn-primary mx-1" (click)="goTo('last')">
-        Last <i class="fas fa-step-forward"></i>
-      </button>
-    </div>
-  </div>
-</div>
+<div class="container-fluid">
+  <div class="row justify-content-center">
+    <!-- Chessboard and Player Info (1st Column) -->
+    <div class="col-md-7 col-lg-6 d-flex flex-column align-items-center">
+      <!-- Top Player (Black) Strip -->
+      <div class="player-strip-wrapper w-100">
+        <app-player-strip [player]="blackPlayer" [isTop]="true"></app-player-strip>
+      </div>
 
-<!-- Chessboard and Move List -->
-<div class="container">
-  <div class="row">
-    <!-- Chessboard Column -->
-    <div class="col-md-6 col-lg-5">
+      <!-- Chessboard -->
       <div class="board-container">
         <div #boardContainer class="chessboard"></div>
       </div>
+
+      <!-- Bottom Player (White) Strip -->
+      <div class="player-strip-wrapper w-100">
+        <app-player-strip [player]="whitePlayer" [isTop]="false"></app-player-strip>
+      </div>
     </div>
 
-    <!-- Move List Column -->
-    <div class="col-md-6 col-lg-7">
-      <div class="move-list-container">
-        <h5>Moves</h5>
-        <div class="move-list" [innerHTML]="renderedMoves"></div>
+    <!-- Move List and Navigation (2nd Column) -->
+    <div class="col-md-5 col-lg-4 d-flex flex-column">
+      <!-- Empty Banner (like in Lichess) -->
+      <div class="move-list-header text-center p-2 bg-light">
+        <!-- Placeholder for any info, if needed -->
+      </div>
+
+      <!-- Move List -->
+      <app-move-list [moves]="moves"></app-move-list>
+
+      <!-- Move navigation buttons -->
+      <div class="text-center mt-3">
+        <button class="btn btn-primary mx-1" (click)="goTo('first')">
+          <i class="fas fa-step-backward"></i>
+        </button>
+        <button class="btn btn-primary mx-1" (click)="goTo('prev')">
+          <i class="fas fa-chevron-left"></i>
+        </button>
+        <button class="btn btn-primary mx-1" (click)="goTo('next')">
+          <i class="fas fa-chevron-right"></i>
+        </button>
+        <button class="btn btn-primary mx-1" (click)="goTo('last')">
+          <i class="fas fa-step-forward"></i>
+        </button>
       </div>
     </div>
   </div>

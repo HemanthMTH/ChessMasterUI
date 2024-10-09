@@ -12,8 +12,14 @@ import { ChessGameService } from '../../services/chess-game.service';
 export class ChessBoardComponent implements AfterViewInit {
   @ViewChild('boardContainer', { static: false }) boardContainer!: ElementRef;
   viewer!: PgnViewer;
-  renderedMoves: string = '';
   pgn: string | null = null;  // Store PGN for the game
+  moves: any[] = []; // Array to store the moves for rendering in move list
+  blackPlayer: any = {};  // Player information for Black
+  whitePlayer: any = {};  // Player information for White
+  blackClock: string = ''; // Black's clock time
+  whiteClock: string = ''; // White's clock time
+  isBlackActive: boolean = false;  // Flag to indicate if Black's clock is active
+  isWhiteActive: boolean = false;  // Flag to indicate if White's clock is active
 
   constructor(
     private route: ActivatedRoute,
@@ -32,7 +38,12 @@ export class ChessBoardComponent implements AfterViewInit {
   fetchGame(gameId: string) {
     this.chessGameService.getGame(gameId).subscribe((game) => {
       this.pgn = game.pgn;
-      this.initializeChessBoard();  // Initialize the board once PGN is fetched
+ 
+      // Process the PGN to extract moves and initialize the board
+      this.initializeChessBoard();
+
+      this.blackPlayer = this.viewer.game.players.black;
+      this.whitePlayer = this.viewer.game.players.white;
     });
   }
 
@@ -72,31 +83,40 @@ export class ChessBoardComponent implements AfterViewInit {
     );
 
     this.viewer.goTo('first');
-    this.renderMoves();
+    this.renderMoves();  // Render moves in the move list
     this.addMoveClickListeners();
   }
 
   renderMoves() {
-    const moveDom = (move: any) => {
-      const isActive = move.path.path === this.viewer.path.path ? 'active' : '';
-      return `<span data-ply="${move.ply}" id="move-${move.path.path}" class="move ${isActive}">${move.san}</span>`;
-    };
-
-    this.renderedMoves = this.viewer.game.mainline
-      .map((move: any) => moveDom(move))
-      .join(' ');
-
-    this.cdr.detectChanges();  // Trigger change detection
+    const moves = [];
+    let pair:any = [];
+    this.viewer.game.mainline.forEach((move: any, index: number) => {
+      if (index % 2 === 0) {
+        pair = [move]; // First, add White's move
+      } else {
+        pair.push(move); // Then, add Black's move
+        moves.push(pair);
+      }
+    });
+  
+    // Handle case for odd number of moves
+    if (pair.length === 1) {
+      moves.push(pair);
+    }
+  
+    this.moves = moves;
+    this.cdr.detectChanges(); // Update the DOM after changes
   }
+  
 
   addMoveClickListeners() {
-    const moves = this.boardContainer.nativeElement.parentElement.querySelectorAll('.move');
-    moves.forEach((moveElement: any) => {
+    const moveElements = this.boardContainer.nativeElement.parentElement.querySelectorAll('.move');
+    moveElements.forEach((moveElement: any) => {
       this.renderer.listen(moveElement, 'click', () => {
         const pathStr = moveElement.getAttribute('id').replace('move-', '');
         const path = new Path(pathStr);
         this.viewer.toPath(path);
-        this.renderMoves();  // Refresh move highlights
+        this.renderMoves();  // Re-render the moves to update active move
       });
     });
   }
@@ -106,3 +126,4 @@ export class ChessBoardComponent implements AfterViewInit {
     this.renderMoves();  // Refresh move highlights
   }
 }
+

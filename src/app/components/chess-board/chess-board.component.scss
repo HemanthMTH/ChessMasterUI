@@ -1,45 +1,50 @@
+.player-strip-wrapper {
+  width: 100%;
+  max-width: 500px;  /* Increase the maximum width */
+  display: flex;
+  justify-content: center;
+  padding: 5px 0;
+}
+
 .board-container {
-  /* Ensure the chessboard is centered and responsive */
+  width: 100%;
   display: flex;
   justify-content: center;
 }
 
 .chessboard {
   width: 100%;
-  max-width: 400px;
-  height: 400px;
+  max-width: 500px;  /* Increase the chessboard size */
+  height: 500px;     /* Increase the chessboard size */
 }
 
-.move-list-container {
-  max-height: 400px;
+.move-list-wrapper {
+  max-height: 500px;  /* Matches the chessboard height */
   overflow-y: auto;
   background-color: #f8f9fa;
   padding: 10px;
+  border: 1px solid #ddd;
   border-radius: 5px;
+  scrollbar-width: none;  /* For Firefox */
+  -ms-overflow-style: none;
 }
 
-.move-list {
+.move-list-header {
+  height: 50px;
+}
+
+.move-pair {
   display: flex;
-  flex-wrap: wrap;
+  justify-content: space-between;
+  padding: 5px 0;
 }
 
-.move {
-  margin: 0 5px;
-  cursor: pointer;
+.white-move,
+.black-move {
+  flex-basis: 45%;
+  text-align: left;
 }
 
-.move.active {
-  background-color: #007bff;
-  color: #fff;
-  padding: 2px 4px;
-  border-radius: 3px;
-}
-
-.controls {
-  margin-bottom: 15px;
-}
-
-/* Optional: Adjust button sizes */
-.btn {
-  min-width: 100px;
+.black-move {
+  text-align: right;
 }
