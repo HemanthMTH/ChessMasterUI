@@ -32,6 +32,12 @@
           background-color: #e7e7e7; /* Change background color on hover */
         }
       }
+
+      .white-move.active, .black-move.active {
+        background-color: #007bff;
+        color: white;
+        border-radius: 3px;
+      }
     }
   
     /* Media queries for responsiveness */

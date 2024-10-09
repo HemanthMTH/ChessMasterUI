@@ -3,15 +3,25 @@
     <div class="move-pair" *ngFor="let pair of moves; let i = index">
       <!-- Move number -->
       <div class="move-number">{{ i + 1 }}</div>
-      
+
       <!-- White move -->
-      <div class="white-move" *ngIf="pair[0]?.path?.path" (click)="onMoveClick(pair[0].path!.path)">
-        {{ pair[0].san || '' }}
+      <div
+        class="white-move"
+        *ngIf="pair[0]?.path?.path"
+        [class.active]="selectedMovePath === pair[0].path!.path"
+        (click)="onMoveClick(pair[0].path!.path)"
+      >
+        {{ pair[0].san || "" }}
       </div>
-      
+
       <!-- Black move -->
-      <div class="black-move" *ngIf="pair[1]?.path?.path" (click)="onMoveClick(pair[1]?.path!.path)">
-        {{ pair[1]?.san || '' }}
+      <div
+        class="black-move"
+        *ngIf="pair[1]?.path?.path"
+        [class.active]="selectedMovePath === (pair[1]?.path)!.path"
+        (click)="onMoveClick((pair[1]?.path)!.path)"
+      >
+        {{ pair[1]?.san || "" }}
       </div>
     </div>
   </div>

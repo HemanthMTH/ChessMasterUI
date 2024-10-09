@@ -1,11 +1,4 @@
-import {
-  Component,
-  EventEmitter,
-  Input,
-  OnChanges,
-  Output,
-  SimpleChanges,
-} from '@angular/core';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { MoveData } from 'pgn-viewer';
 
 @Component({
@@ -13,17 +6,14 @@ import { MoveData } from 'pgn-viewer';
   templateUrl: './move-list.component.html',
   styleUrls: ['./move-list.component.scss'],
 })
-export class MoveListComponent implements OnChanges {
+export class MoveListComponent {
   @Input() moves: Array<[MoveData, MoveData?]> = [];
-  @Output() moveClicked = new EventEmitter<string>();
+  @Input() selectedMovePath: string | null = null; // To track the highlighted move
+  @Output() moveClicked: EventEmitter<string> = new EventEmitter<string>();
 
-  ngOnChanges(changes: SimpleChanges): void {
-    console.log('Moves received:', this.moves);
-  }
-
-  onMoveClick(movePath: string) {
-    if (movePath) {
-      this.moveClicked.emit(movePath);
+  onMoveClick(path: string | undefined) {
+    if (path) {
+      this.moveClicked.emit(path); // Emit the selected move's path to the parent
     }
   }
 }
