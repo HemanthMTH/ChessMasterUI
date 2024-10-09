@@ -26,7 +26,7 @@
       </div>
 
       <!-- Move List -->
-      <app-move-list [moves]="moves"></app-move-list>
+      <app-move-list [moves]="moves" (moveClicked)="onMoveClicked($event)"></app-move-list>
 
       <!-- Move navigation buttons -->
       <div class="text-center mt-3">

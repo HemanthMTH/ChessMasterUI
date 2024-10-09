@@ -1,7 +1,14 @@
-import { AfterViewInit, ChangeDetectorRef, Component, ElementRef, Renderer2, ViewChild } from '@angular/core';
+import {
+  AfterViewInit,
+  ChangeDetectorRef,
+  Component,
+  ElementRef,
+  Renderer2,
+  ViewChild,
+} from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { Chessground } from 'chessground';
-import { Opts, Path, PgnViewer } from 'pgn-viewer';
+import { MoveData, Opts, Path, PgnViewer, Player } from 'pgn-viewer';
 import { ChessGameService } from '../../services/chess-game.service';
 
 @Component({
@@ -12,14 +19,15 @@ import { ChessGameService } from '../../services/chess-game.service';
 export class ChessBoardComponent implements AfterViewInit {
   @ViewChild('boardContainer', { static: false }) boardContainer!: ElementRef;
   viewer!: PgnViewer;
-  pgn: string | null = null;  // Store PGN for the game
-  moves: any[] = []; // Array to store the moves for rendering in move list
-  blackPlayer: any = {};  // Player information for Black
-  whitePlayer: any = {};  // Player information for White
-  blackClock: string = ''; // Black's clock time
-  whiteClock: string = ''; // White's clock time
-  isBlackActive: boolean = false;  // Flag to indicate if Black's clock is active
-  isWhiteActive: boolean = false;  // Flag to indicate if White's clock is active
+  pgn: string | null = null; // Store PGN for the game
+  moves: Array<[MoveData, MoveData?]> = [];
+  blackPlayer: Player = {
+    isLichessUser: false
+  }; 
+  whitePlayer: Player = {
+    isLichessUser: false
+  }; 
+  selectedMovePath: string | null = null; // Track selected mov
 
   constructor(
     private route: ActivatedRoute,
@@ -29,16 +37,15 @@ export class ChessBoardComponent implements AfterViewInit {
   ) {}
 
   ngAfterViewInit(): void {
-    this.route.params.subscribe(params => {
+    this.route.params.subscribe((params) => {
       const gameId = params['id'];
-      this.fetchGame(gameId);  // Fetch PGN for the game using the ID
+      this.fetchGame(gameId); // Fetch PGN for the game using the ID
     });
   }
 
   fetchGame(gameId: string) {
     this.chessGameService.getGame(gameId).subscribe((game) => {
       this.pgn = game.pgn;
- 
       // Process the PGN to extract moves and initialize the board
       this.initializeChessBoard();
 
@@ -83,47 +90,56 @@ export class ChessBoardComponent implements AfterViewInit {
     );
 
     this.viewer.goTo('first');
-    this.renderMoves();  // Render moves in the move list
+    this.renderMoves(); // Render moves in the move list
     this.addMoveClickListeners();
   }
 
+  onMoveClicked(movePath: string) {
+    if (movePath) {
+      const path = new Path(movePath);
+      this.viewer.toPath(path); // Navigate the viewer to the clicked move's position
+    }
+  }
+
   renderMoves() {
-    const moves = [];
-    let pair:any = [];
-    this.viewer.game.mainline.forEach((move: any, index: number) => {
+    const moves: Array<[MoveData, MoveData?]> = [];
+    let pair: [MoveData, MoveData?] | undefined = undefined;
+
+    this.viewer.game.mainline.forEach((move: MoveData, index: number) => {
       if (index % 2 === 0) {
-        pair = [move]; // First, add White's move
-      } else {
-        pair.push(move); // Then, add Black's move
-        moves.push(pair);
+        pair = [move]; // White's move
+      } else if (pair) {
+        pair.push(move); // Black's move
+        moves.push(pair); // Push the complete pair
+        pair = undefined;
       }
     });
-  
-    // Handle case for odd number of moves
-    if (pair.length === 1) {
-      moves.push(pair);
+
+    // Handle odd number of moves
+    if (pair) {
+      moves.push([pair[0]]); // Push the last white move if there's no black move
     }
-  
+
+    // Assign to this.moves
     this.moves = moves;
     this.cdr.detectChanges(); // Update the DOM after changes
   }
-  
 
   addMoveClickListeners() {
-    const moveElements = this.boardContainer.nativeElement.parentElement.querySelectorAll('.move');
+    const moveElements =
+      this.boardContainer.nativeElement.parentElement.querySelectorAll('.move');
     moveElements.forEach((moveElement: any) => {
       this.renderer.listen(moveElement, 'click', () => {
         const pathStr = moveElement.getAttribute('id').replace('move-', '');
         const path = new Path(pathStr);
         this.viewer.toPath(path);
-        this.renderMoves();  // Re-render the moves to update active move
+        this.renderMoves(); // Re-render the moves to update active move
       });
     });
   }
 
   goTo(position: 'first' | 'prev' | 'next' | 'last') {
     this.viewer.goTo(position);
-    this.renderMoves();  // Refresh move highlights
+    this.renderMoves(); // Refresh move highlights
   }
 }
-

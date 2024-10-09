@@ -1,19 +1,18 @@
 <div class="move-list-wrapper">
-    <div class="move-list">
-      <div class="move-pair" *ngFor="let pair of moves; let i = index">
-        <!-- Move number -->
-        <div class="move-number">{{ i + 1 }}</div>
-        
-        <!-- White move -->
-        <div class="white-move">
-          {{ pair[0]?.san || '' }}
-        </div>
-        
-        <!-- Black move -->
-        <div class="black-move">
-          {{ pair[1]?.san || '' }}
-        </div>
+  <div class="move-list">
+    <div class="move-pair" *ngFor="let pair of moves; let i = index">
+      <!-- Move number -->
+      <div class="move-number">{{ i + 1 }}</div>
+      
+      <!-- White move -->
+      <div class="white-move" *ngIf="pair[0]?.path?.path" (click)="onMoveClick(pair[0].path!.path)">
+        {{ pair[0].san || '' }}
+      </div>
+      
+      <!-- Black move -->
+      <div class="black-move" *ngIf="pair[1]?.path?.path" (click)="onMoveClick(pair[1]?.path!.path)">
+        {{ pair[1]?.san || '' }}
       </div>
     </div>
   </div>
-  
+</div>
