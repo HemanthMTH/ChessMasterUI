@@ -31,10 +31,6 @@
           </div>
         </div>
 
-        <!-- <div>
-          {{bestMove}}
-        </div> -->
-
         <!-- Game Format Info -->
         <div class="game-details text-center mt-2">
           <div>
@@ -45,6 +41,9 @@
             Result: <strong>{{ result || "Ongoing" }}</strong>
           </div>
           <div>Termination: {{ termination || "Normal" }}</div>
+          <div *ngIf="bestMove">
+            Best Move: <strong>{{ bestMove }}</strong>
+          </div>
         </div>
       </div>
 

@@ -9,7 +9,9 @@ import {
 import { ActivatedRoute } from '@angular/router';
 import { Chessground } from 'chessground';
 import { Key, MoveData, Opts, Path, PgnViewer, Player } from 'pgn-viewer';
+import { debounceTime, fromEvent, of, switchMap } from 'rxjs';
 import { ChessGameService } from '../../services/chess-game.service';
+
 @Component({
   selector: 'app-chess-board',
   templateUrl: './chess-board.component.html',
@@ -48,28 +50,27 @@ export class ChessBoardComponent implements AfterViewInit {
     this.addKeyboardListeners();
   }
 
-  fetchGame(gameId: string) {
-    this.chessGameService.getGame(gameId).subscribe((game) => {
-      this.pgn = game.pgn;
-      this.initializeChessBoard(); // Initialize the chessboard with the fetched PGN
-      this.bestMove = this.getBestMove(this.viewer);
-      this.blackPlayer = this.viewer.game.players.black;
-      this.whitePlayer = this.viewer.game.players.white;
-      this.result = this.viewer.game.metadata.result;
+  async fetchGame(gameId: string) {
+    const game = await this.chessGameService.getGame(gameId).toPromise();
+    this.pgn = game?.pgn ?? '';
+    this.initializeChessBoard(); // Initialize the chessboard with the fetched PGN
+    this.blackPlayer = this.viewer.game.players.black;
+    this.whitePlayer = this.viewer.game.players.white;
+    this.result = this.viewer.game.metadata.result;
 
-      if (this.viewer.game.metadata.timeControl) {
-        this.timeControlInitial = this.viewer.game.metadata.timeControl.initial
-          ? this.viewer.game.metadata.timeControl.initial / 60
-          : undefined;
-        this.timeControlIncrement = this.viewer.game.metadata.timeControl
-          .increment
-          ? this.viewer.game.metadata.timeControl.increment
-          : undefined;
-      }
-      this.timeControl = `${this.timeControlInitial || 'N/A'} + ${
-        this.timeControlIncrement || '0'
-      }`;
-    });
+    if (this.viewer.game.metadata.timeControl) {
+      this.timeControlInitial = this.viewer.game.metadata.timeControl.initial
+        ? this.viewer.game.metadata.timeControl.initial / 60
+        : undefined;
+      this.timeControlIncrement = this.viewer.game.metadata.timeControl.increment
+        ? this.viewer.game.metadata.timeControl.increment
+        : undefined;
+    }
+    this.timeControl = `${this.timeControlInitial || 'N/A'} + ${
+      this.timeControlIncrement || '0'
+    }`;
+
+    this.bestMove = await this.getBestMove(this.getCurrentFEN(this.viewer));
   }
 
   initializeChessBoard() {
@@ -104,7 +105,7 @@ export class ChessBoardComponent implements AfterViewInit {
     this.addMoveClickListeners();
   }
 
-  onMove(orig: Key, dest: Key) {
+  async onMove(orig: Key, dest: Key) {
     const uci = `${orig}${dest}`;
     const move = this.viewer.game.mainline.find((m) => m.uci === uci);
 
@@ -113,6 +114,7 @@ export class ChessBoardComponent implements AfterViewInit {
       this.viewer.toPath(new Path(move.path.path)); // Update PGN viewer path
       this.viewer.ground?.move(orig, dest); // Update chessboard
       this.renderMoves(); // Refresh the move list
+      this.bestMove = await this.getBestMove(this.getCurrentFEN(this.viewer)); // Get the best move
     } else {
       console.error('Invalid move');
     }
@@ -179,21 +181,24 @@ export class ChessBoardComponent implements AfterViewInit {
   // Navigate through the game using controls (First, Previous, Next, Last)
   goTo(position: 'first' | 'prev' | 'next' | 'last') {
     this.viewer.goTo(position);
-    this.bestMove = this.getBestMove(this.viewer);
+    const fen = this.getCurrentFEN(this.viewer)
+    setTimeout(async () => {
+      this.bestMove = await this.getBestMove(fen);
+    }, 500);
   }
 
-  getBestMove(view: PgnViewer): any {
-    const currentData = this.viewer.curData();
-    const currentFen = currentData.fen;
-    this.chessGameService.analyzePosition(currentFen).subscribe(
-      (response) => {
-        return response.bestMove;
-        // this.viewer.ground?.move(response.bestMove.from, response.bestMove.to);
-      },
-      (error) => {
-        console.error('Error fetching the best move:', error);
-        return 'Unable to find Best Move!!';
-      }
-    );
+  getCurrentFEN(view: PgnViewer): string{
+    const currentData = view.curData();
+    return currentData.fen;
+  }
+
+  async getBestMove(currentFen: string): Promise<string> {
+    try {
+      const response = await this.chessGameService.analyzePosition(currentFen).toPromise();
+      return response.bestMove || 'No Best Move Found';
+    } catch (error) {
+      console.error('Error fetching the best move:', error);
+      return 'Error retrieving best move';
+    }
   }
 }
