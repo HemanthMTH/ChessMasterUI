@@ -70,7 +70,10 @@ export class ChessBoardComponent implements AfterViewInit {
       this.timeControlIncrement || '0'
     }`;
 
-    this.bestMove = await this.getBestMove(this.getCurrentFEN(this.viewer));
+    // Fetch and display the best move
+    const currentFen = this.getCurrentFEN(this.viewer);
+    this.bestMove = await this.getBestMove(currentFen);
+    this.drawBestMoveArrow(this.bestMove); // Draw the arrow for the best move
   }
 
   initializeChessBoard() {
@@ -114,9 +117,26 @@ export class ChessBoardComponent implements AfterViewInit {
       this.viewer.toPath(new Path(move.path.path)); // Update PGN viewer path
       this.viewer.ground?.move(orig, dest); // Update chessboard
       this.renderMoves(); // Refresh the move list
-      this.bestMove = await this.getBestMove(this.getCurrentFEN(this.viewer)); // Get the best move
+
+      // Get and display the best move after this move
+      const currentFen = this.getCurrentFEN(this.viewer);
+      this.bestMove = await this.getBestMove(currentFen);
+      this.drawBestMoveArrow(this.bestMove); // Draw arrow for the new best move
     } else {
       console.error('Invalid move');
+    }
+  }
+
+  // Method to draw arrows for the best move
+  drawBestMoveArrow(bestMove: string) {
+    if (bestMove) {
+      const from = bestMove.slice(0, 2) as Key; // Starting square of best move
+      const to = bestMove.slice(2, 4) as Key;   // Destination square of best move
+
+      // Set an arrow on the board using Chessground's setShapes method
+      this.chessground.setShapes([
+        { orig: from, dest: to, brush: 'green' }, // Drawing a green arrow for the best move
+      ]);
     }
   }
 
@@ -181,13 +201,14 @@ export class ChessBoardComponent implements AfterViewInit {
   // Navigate through the game using controls (First, Previous, Next, Last)
   goTo(position: 'first' | 'prev' | 'next' | 'last') {
     this.viewer.goTo(position);
-    const fen = this.getCurrentFEN(this.viewer)
-    setTimeout(async () => {
-      this.bestMove = await this.getBestMove(fen);
-    }, 500);
+    const fen = this.getCurrentFEN(this.viewer);
+    this.getBestMove(fen).then(bestMove => {
+      this.bestMove = bestMove;
+      this.drawBestMoveArrow(bestMove);
+    });
   }
 
-  getCurrentFEN(view: PgnViewer): string{
+  getCurrentFEN(view: PgnViewer): string {
     const currentData = view.curData();
     return currentData.fen;
   }
@@ -195,6 +216,7 @@ export class ChessBoardComponent implements AfterViewInit {
   async getBestMove(currentFen: string): Promise<string> {
     try {
       const response = await this.chessGameService.analyzePosition(currentFen).toPromise();
+      console.log(response.bestMove, response.fen)
       return response.bestMove || 'No Best Move Found';
     } catch (error) {
       console.error('Error fetching the best move:', error);
