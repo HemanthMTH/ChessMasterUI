@@ -1,33 +1,61 @@
+<!-- <div>
+  {{bestMove}}
+</div> -->
 <div class="container-fluid">
   <div class="row justify-content-center">
-    <!-- Chessboard and Player Info (1st Column) -->
-    <div class="col-md-7 col-lg-6 d-flex flex-column align-items-center">
-      <!-- Top Player (Black) Strip -->
-      <div class="player-strip-wrapper w-100">
-        <app-player-strip [player]="blackPlayer" [isTop]="true"></app-player-strip>
+    <!-- New Section: Player Info, Game Details, Notes (1st Column) -->
+    <div class="col-md-3 d-flex flex-column game-info-notes-wrapper">
+      <!-- Upper Section: Game Information -->
+      <div class="game-info-section p-3 mb-3 bg-light">
+        <div class="d-flex justify-content-between">
+          <!-- Black Player Info -->
+          <div class="player-info d-flex align-items-center">
+            <i class="fa-solid fa-circle me-2"></i>
+            <div>
+              <strong>{{ blackPlayer.name || "Black" }}</strong> ({{
+                blackPlayer.rating
+              }})
+            </div>
+          </div>
+        </div>
+
+        <div class="d-flex justify-content-between mt-1">
+          <!-- White Player Info -->
+          <div class="player-info d-flex align-items-center">
+            <i class="fa-regular fa-circle me-2"></i>
+            <div>
+              <strong>{{ whitePlayer.name || "White" }}</strong> ({{
+                whitePlayer.rating
+              }})
+            </div>
+          </div>
+        </div>
+
+        <!-- <div>
+          {{bestMove}}
+        </div> -->
+
+        <!-- Game Format Info -->
+        <div class="game-details text-center mt-2">
+          <div>
+            <strong>{{ gameFormat || "Blitz" }}</strong> •
+            {{ timeControl || "3+2" }}
+          </div>
+          <div>
+            Result: <strong>{{ result || "Ongoing" }}</strong>
+          </div>
+          <div>Termination: {{ termination || "Normal" }}</div>
+        </div>
       </div>
 
-      <!-- Chessboard -->
-      <div class="board-container">
-        <div #boardContainer class="chessboard"></div>
+      <!-- Notes Section -->
+      <div class="notes-section bg-light p-3 flex-grow-1">
+        <textarea
+          class="form-control"
+          placeholder="Type private notes here"
+          rows="8"
+        ></textarea>
       </div>
-
-      <!-- Bottom Player (White) Strip -->
-      <div class="player-strip-wrapper w-100">
-        <app-player-strip [player]="whitePlayer" [isTop]="false"></app-player-strip>
-      </div>
-    </div>
-
-    <!-- Move List and Navigation (2nd Column) -->
-    <div class="col-md-5 col-lg-4 d-flex flex-column">
-      <!-- Empty Banner (like in Lichess) -->
-      <div class="move-list-header text-center p-2 bg-light">
-        <!-- Placeholder for any info, if needed -->
-      </div>
-
-      <!-- Move List -->
-      <app-move-list [moves]="moves" [selectedMovePath]="selectedMovePath" (moveClicked)="onMoveClicked($event)"></app-move-list>
-
       <!-- Move navigation buttons -->
       <div class="text-center mt-3">
         <button class="btn btn-primary mx-1" (click)="goTo('first')">
@@ -43,6 +71,31 @@
           <i class="fas fa-step-forward"></i>
         </button>
       </div>
+    </div>
+
+    <!-- Chessboard and Player Info (2nd Column) -->
+    <div
+      class="col-md-6 col-lg-5 d-flex flex-column align-items-center board-wrapper"
+    >
+      <!-- Chessboard -->
+      <div class="board-container">
+        <div #boardContainer class="chessboard"></div>
+      </div>
+    </div>
+
+    <!-- Move List and Navigation (3rd Column) -->
+    <div class="col-md-3 col-lg-4 d-flex flex-column move-list-wrapper">
+      <div class="move-list-header text-center p-2 bg-light">
+        <!-- Placeholder for any info, if needed -->
+      </div>
+
+      <!-- Move List -->
+      <app-move-list
+        [moves]="moves"
+        [selectedMovePath]="selectedMovePath"
+        (moveClicked)="onMoveClicked($event)"
+      >
+      </app-move-list>
     </div>
   </div>
 </div>

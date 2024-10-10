@@ -33,4 +33,8 @@ export class ChessGameService {
   getGame(gameId: string): Observable<ChessGame> {
     return this.http.get<ChessGame>(`${this.apiUrl}/${gameId}`);
   }
+
+  analyzePosition(fen: string): Observable<any> {
+    return this.http.post(`${this.apiUrl}/analyze-position`, { fen });
+  }
 }

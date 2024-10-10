@@ -8,9 +8,8 @@ import {
 } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { Chessground } from 'chessground';
-import { MoveData, Opts, Path, PgnViewer, Player } from 'pgn-viewer';
+import { Key, MoveData, Opts, Path, PgnViewer, Player } from 'pgn-viewer';
 import { ChessGameService } from '../../services/chess-game.service';
-
 @Component({
   selector: 'app-chess-board',
   templateUrl: './chess-board.component.html',
@@ -21,9 +20,17 @@ export class ChessBoardComponent implements AfterViewInit {
   viewer!: PgnViewer;
   pgn: string | null = null; // Store PGN for the game
   moves: Array<[MoveData, MoveData?]> = [];
-  blackPlayer: Player = { isLichessUser: false }; 
-  whitePlayer: Player = { isLichessUser: false }; 
+  blackPlayer: Player = { isLichessUser: false };
+  whitePlayer: Player = { isLichessUser: false };
   selectedMovePath: string | null = null; // Track selected move path for highlighting
+  result: string | null | undefined;
+  gameFormat!: string;
+  timeControlInitial!: number | undefined;
+  timeControlIncrement!: number | undefined;
+  timeControl!: string;
+  termination!: string;
+  chessground!: ReturnType<typeof Chessground>;
+  bestMove!: string;
 
   constructor(
     private route: ActivatedRoute,
@@ -35,48 +42,80 @@ export class ChessBoardComponent implements AfterViewInit {
   ngAfterViewInit(): void {
     this.route.params.subscribe((params) => {
       const gameId = params['id'];
-      this.fetchGame(gameId); // Fetch PGN for the game using the ID
+      this.fetchGame(gameId);
     });
+
+    this.addKeyboardListeners();
   }
 
   fetchGame(gameId: string) {
     this.chessGameService.getGame(gameId).subscribe((game) => {
       this.pgn = game.pgn;
       this.initializeChessBoard(); // Initialize the chessboard with the fetched PGN
+      this.bestMove = this.getBestMove(this.viewer);
       this.blackPlayer = this.viewer.game.players.black;
       this.whitePlayer = this.viewer.game.players.white;
+      this.result = this.viewer.game.metadata.result;
+
+      if (this.viewer.game.metadata.timeControl) {
+        this.timeControlInitial = this.viewer.game.metadata.timeControl.initial
+          ? this.viewer.game.metadata.timeControl.initial / 60
+          : undefined;
+        this.timeControlIncrement = this.viewer.game.metadata.timeControl
+          .increment
+          ? this.viewer.game.metadata.timeControl.increment
+          : undefined;
+      }
+      this.timeControl = `${this.timeControlInitial || 'N/A'} + ${
+        this.timeControlIncrement || '0'
+      }`;
     });
   }
 
   initializeChessBoard() {
     const opts: Opts = {
       pgn: this.pgn!,
-      orientation: 'white',
-      showPlayers: true,
-      showMoves: 'right',
-      showClocks: true,
-      showControls: true,
-      initialPly: 1,
-      scrollToMove: true,
-      drawArrows: true,
-      lichess: false,
-      classes: 'my-custom-class',
     };
 
     this.viewer = new PgnViewer(opts);
 
-    // Initialize Chessground for interactive moves
-    this.viewer.setGround(
-      Chessground(this.boardContainer.nativeElement, {
-        draggable: { enabled: true, showGhost: true },
-        movable: { free: true, color: 'both' },
-        highlight: { lastMove: true, check: true },
-      })
-    );
+    const legalDestinations = new Map<Key, Key[]>();
 
-    this.viewer.goTo('first');
-    this.renderMoves(); // Render the list of moves after setting up the chessboard
+    this.chessground = Chessground(this.boardContainer.nativeElement, {
+      viewOnly: false,
+      draggable: { enabled: true, showGhost: true },
+      movable: {
+        color: 'both',
+        free: false,
+        showDests: true,
+        dests: legalDestinations, // Define legal moves here
+        rookCastle: true,
+        events: {
+          after: (orig: Key, dest: Key) => this.onMove(orig, dest),
+        },
+      },
+      highlight: { lastMove: true, check: true },
+      animation: { enabled: true, duration: 200 },
+    });
+
+    this.viewer.setGround(this.chessground);
+    this.viewer.goTo('last');
+    this.renderMoves();
     this.addMoveClickListeners();
+  }
+
+  onMove(orig: Key, dest: Key) {
+    const uci = `${orig}${dest}`;
+    const move = this.viewer.game.mainline.find((m) => m.uci === uci);
+
+    if (move) {
+      // Move found in the PGN, update the board and viewer
+      this.viewer.toPath(new Path(move.path.path)); // Update PGN viewer path
+      this.viewer.ground?.move(orig, dest); // Update chessboard
+      this.renderMoves(); // Refresh the move list
+    } else {
+      console.error('Invalid move');
+    }
   }
 
   // Handle move click and navigate the board to that move
@@ -88,9 +127,7 @@ export class ChessBoardComponent implements AfterViewInit {
       this.cdr.detectChanges(); // Update the view
     }
   }
-  
 
-  // Render the list of moves and pair them as white and black moves
   renderMoves() {
     const moves: Array<[MoveData, MoveData?]> = [];
     let pair: [MoveData, MoveData?] | undefined = undefined;
@@ -111,12 +148,10 @@ export class ChessBoardComponent implements AfterViewInit {
       moves.push([pair[0]]); // Only push the white move
     }
 
-    // Assign moves to the component and trigger change detection
     this.moves = moves;
     this.cdr.detectChanges();
   }
 
-  // Add click listeners to all move elements in the DOM
   addMoveClickListeners() {
     const moveElements =
       this.boardContainer.nativeElement.parentElement.querySelectorAll('.move');
@@ -130,9 +165,35 @@ export class ChessBoardComponent implements AfterViewInit {
     });
   }
 
+  // Keyboard navigation for next and previous moves
+  addKeyboardListeners() {
+    window.addEventListener('keydown', (event: KeyboardEvent) => {
+      if (event.key === 'ArrowRight') {
+        this.goTo('next'); // Navigate to the next move
+      } else if (event.key === 'ArrowLeft') {
+        this.goTo('prev'); // Navigate to the previous move
+      }
+    });
+  }
+
   // Navigate through the game using controls (First, Previous, Next, Last)
   goTo(position: 'first' | 'prev' | 'next' | 'last') {
     this.viewer.goTo(position);
-    this.renderMoves(); // Refresh move highlights and board position
+    this.bestMove = this.getBestMove(this.viewer);
+  }
+
+  getBestMove(view: PgnViewer): any {
+    const currentData = this.viewer.curData();
+    const currentFen = currentData.fen;
+    this.chessGameService.analyzePosition(currentFen).subscribe(
+      (response) => {
+        return response.bestMove;
+        // this.viewer.ground?.move(response.bestMove.from, response.bestMove.to);
+      },
+      (error) => {
+        console.error('Error fetching the best move:', error);
+        return 'Unable to find Best Move!!';
+      }
+    );
   }
 }
