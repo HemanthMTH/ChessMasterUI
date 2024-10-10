@@ -10,6 +10,8 @@ import { ActivatedRoute } from '@angular/router';
 import { Chessground } from 'chessground';
 import { Key, MoveData, Opts, Path, PgnViewer, Player } from 'pgn-viewer';
 import { debounceTime, fromEvent, of, switchMap } from 'rxjs';
+import { AnalyzeRequest } from 'src/app/models/analyze-request';
+import { ChessGame } from 'src/app/models/chess-game';
 import { ChessGameService } from '../../services/chess-game.service';
 
 @Component({
@@ -33,6 +35,7 @@ export class ChessBoardComponent implements AfterViewInit {
   termination!: string;
   chessground!: ReturnType<typeof Chessground>;
   bestMove!: string;
+  game!: ChessGame;
 
   constructor(
     private route: ActivatedRoute,
@@ -52,7 +55,13 @@ export class ChessBoardComponent implements AfterViewInit {
 
   async fetchGame(gameId: string) {
     const game = await this.chessGameService.getGame(gameId).toPromise();
-    this.pgn = game?.pgn ?? '';
+    if (game){
+      this.game = game;
+      this.pgn = game.pgn
+    }
+    else{
+      console.error('Unable to get the game');
+    }
     this.initializeChessBoard(); // Initialize the chessboard with the fetched PGN
     this.blackPlayer = this.viewer.game.players.black;
     this.whitePlayer = this.viewer.game.players.white;
@@ -144,6 +153,10 @@ export class ChessBoardComponent implements AfterViewInit {
   onMoveClicked(movePath: string) {
     if (movePath) {
       const path = new Path(movePath);
+      this.getBestMove(this.getCurrentFEN(this.viewer)).then(bestMove => {
+        this.bestMove = bestMove;
+        this.drawBestMoveArrow(bestMove);
+      });
       this.viewer.toPath(path); // Navigate the viewer to the clicked move's position
       this.selectedMovePath = movePath; // Highlight the selected move
       this.cdr.detectChanges(); // Update the view
@@ -215,9 +228,10 @@ export class ChessBoardComponent implements AfterViewInit {
 
   async getBestMove(currentFen: string): Promise<string> {
     try {
-      const response = await this.chessGameService.analyzePosition(currentFen).toPromise();
-      console.log(response.bestMove, response.fen)
-      return response.bestMove || 'No Best Move Found';
+      const analyzeRequest = new AnalyzeRequest(this.game.id, currentFen)
+      const response = await this.chessGameService.analyzePosition(analyzeRequest).toPromise();
+      console.log(response?.bestMove, response?.currentFen)
+      return response?.bestMove || 'No Best Move Found';
     } catch (error) {
       console.error('Error fetching the best move:', error);
       return 'Error retrieving best move';

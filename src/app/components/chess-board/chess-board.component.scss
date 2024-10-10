@@ -1,117 +1,76 @@
-.game-info-notes-wrapper {
+/* Main container and row setup */
+.container-fluid {
+  height: 100vh; /* Full viewport height */
+}
+
+.row {
   display: flex;
-  flex-direction: column;
   height: 100%;
 }
 
+/* Chessboard container and wrapper */
 .board-wrapper {
   display: flex;
-  flex-direction: column;
   justify-content: center;
   align-items: center;
   height: 100%;
-}
-
-.move-list-wrapper {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-}
-
-.move-list-header {
-  height: 50px;
 }
 
 .board-container {
-  display: flex;
-  justify-content: center;
-  height: 500px;
+  position: relative;
   width: 100%;
-  max-width: 500px;
+  padding-bottom: 100%; /* This ensures a square board */
+  max-width: 600px;
+  max-height: 400px;
 }
 
 .chessboard {
+  position: absolute;
+  top: 0;
+  left: 0;
   width: 100%;
-  max-width: 500px;
-  height: 500px;
+  height: 100%;
 }
 
+/* Game info and move list columns */
+.game-info-notes-wrapper,
+.move-list-wrapper {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 100%; /* Ensures these columns match the height of the chessboard */
+}
+
+.game-info-section,
+.move-list {
+  overflow-y: auto; /* Allow scrolling if content exceeds height */
+}
+
+/* Notes section grows to fill remaining space */
 .notes-section {
   flex-grow: 1;
-}
-
-.move-list-wrapper {
-  max-height: 500px;
-  overflow-y: auto;
-  background-color: #f8f9fa;
   padding: 10px;
-  border: 1px solid #ddd;
-  border-radius: 5px;
-  scrollbar-width: none;
-  -ms-overflow-style: none;
+  background-color: #f8f9fa;
 }
 
-.move-list .move-pair {
-  display: grid;
-  grid-template-columns: 40px 1fr 1fr;
-  align-items: center;
-}
-
-.move-number {
-  text-align: right;
-  padding-right: 10px;
-  background-color: #f0f0f0;
-  border-right: 1px solid #ccc;
-  font-weight: lighter;
-}
-
-.white-move,
-.black-move {
-  padding-left: 10px;
-  cursor: pointer;
-}
-
-.white-move.active,
-.black-move.active {
-  background-color: #007bff;
-  color: white;
-  border-radius: 3px;
-}
-
-.white-move:hover,
-.black-move:hover {
-  background-color: #e7e7e7;
-}
-
+/* Responsive adjustments */
 @media (max-width: 768px) {
-  .move-pair {
-    grid-template-columns: 30px 1fr 1fr;
+  .row {
+    flex-direction: column;
+    height: auto;
   }
 
-  .move-number {
-    padding-right: 5px;
-    font-size: 14px;
+  .board-wrapper {
+    width: 100%;
   }
 
-  .white-move,
-  .black-move {
-    padding-left: 5px;
-    font-size: 14px;
-  }
-}
-
-@media (max-width: 576px) {
-  .move-pair {
-    grid-template-columns: 1fr 1fr;
+  .board-container {
+    max-width: 100%;
   }
 
-  .move-number {
-    display: none;
-  }
-
-  .white-move,
-  .black-move {
-    padding-left: 0;
-    font-size: 12px;
+  .game-info-notes-wrapper,
+  .move-list-wrapper {
+    height: auto;
+    margin-bottom: 20px;
   }
 }

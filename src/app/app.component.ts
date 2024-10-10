@@ -14,13 +14,14 @@ export class AppComponent {
   constructor(private authService: AuthService, private router: Router) {}
 
   ngOnInit() {
-    this.isAuthenticated = this.authService.isAuthenticated(); // Check if the user is authenticated when the app loads
+    this.authService.isAuthenticated$.subscribe(isAuth => {
+      this.isAuthenticated = isAuth;
+    });
   }
 
   // Method to handle logout
   logout() {
     this.authService.logout(); // Clear the auth token
-    this.isAuthenticated = false; // Update the UI
     this.router.navigate(['/login']); // Navigate to login after logout
   }
 }

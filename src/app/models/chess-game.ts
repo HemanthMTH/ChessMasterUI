@@ -12,5 +12,5 @@ export interface ChessGame {
     link?: string;               // Game link
     site?: string;               // Site where the game was played
     pgn: string;                 // PGN content
-    fen: string;                 // FEN (after conversion)
+    userId: string;
 }
