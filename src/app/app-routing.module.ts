@@ -8,8 +8,6 @@ import { GameListComponent } from './components/chess-game/game-list/game-list.c
 import { AuthGuard } from './guards/auth.guard';
 import { RedirectGuard } from './guards/redirect.guard';
 
-const famousGameId = 'FAMOUS_GAME_ID';
-
 const routes: Routes = [
   { path: 'login', component: LoginComponent },
   { path: 'register', component: RegisterComponent },
