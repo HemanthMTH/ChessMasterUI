@@ -1,5 +1,5 @@
 <div class="container d-flex justify-content-center align-items-center vh-100">
-  <div class="card p-4 shadow" style="width: 400px;">
+  <div class="card p-4 shadow" style="width: 400px">
     <h2 class="text-center">Login</h2>
     <form [formGroup]="loginForm" (ngSubmit)="onSubmit()">
       <div class="form-group">
@@ -10,10 +10,16 @@
           class="form-control"
           formControlName="email"
           [ngClass]="{
-            'is-invalid': loginForm.get('email')?.invalid && loginForm.get('email')?.touched
+            'is-invalid':
+              loginForm.get('email')?.invalid && loginForm.get('email')?.touched
           }"
         />
-        <div *ngIf="loginForm.get('email')?.invalid && loginForm.get('email')?.touched" class="text-danger">
+        <div
+          *ngIf="
+            loginForm.get('email')?.invalid && loginForm.get('email')?.touched
+          "
+          class="text-danger"
+        >
           Email is required and must be valid.
         </div>
       </div>
@@ -26,17 +32,36 @@
           class="form-control"
           formControlName="password"
           [ngClass]="{
-            'is-invalid': loginForm.get('password')?.invalid && loginForm.get('password')?.touched
+            'is-invalid':
+              loginForm.get('password')?.invalid &&
+              loginForm.get('password')?.touched
           }"
         />
-        <div *ngIf="loginForm.get('password')?.invalid && loginForm.get('password')?.touched" class="text-danger">
+        <div
+          *ngIf="
+            loginForm.get('password')?.invalid &&
+            loginForm.get('password')?.touched
+          "
+          class="text-danger"
+        >
           Password is required.
         </div>
       </div>
 
-      <button type="submit" class="btn btn-primary mt-4 w-100" [disabled]="loginForm.invalid">
+      <button
+        type="submit"
+        class="btn btn-primary mt-4 w-100"
+        [disabled]="loginForm.invalid"
+      >
         Login
       </button>
     </form>
+    <!-- Register button for new users -->
+    <div class="text-center mt-3">
+      <p>
+        Don't have an account?
+        <a routerLink="/register">Register here</a>
+      </p>
+    </div>
   </div>
 </div>

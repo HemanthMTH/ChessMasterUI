@@ -1,29 +1,74 @@
 <div class="container-fluid h-100">
+  <!-- Famous Game Section -->
+  <div *ngIf="!isAuthenticated" class="famous-game-trivia text-center p-4">
+    <h4 class="text-primary">Marshall's Immortal Game</h4>
+    <p>
+      One of the most famous chess games ever played, known for Frank
+      Marshall's brilliant queen sacrifice, which left spectators in awe
+      and reportedly showering the board with gold coins! This game took
+      place between Frank Marshall and Stefan Levitsky during the 18th DSB
+      Congress in 1912.
+    </p>
+  </div>
+
   <div class="row h-100">
     <!-- Game Info Column (Left) -->
     <div class="col-md-3 d-flex flex-column justify-content-between game-info-notes-wrapper">
       <div class="game-info-section p-3 bg-light">
+        
         <div class="d-flex justify-content-between">
-          <div class="player-info">
-            <strong>{{ blackPlayer.name || "Black" }}</strong> ({{ blackPlayer.rating }})
+          <!-- Black Player Info -->
+          <div class="player-info d-flex align-items-center">
+            <i class="fa-solid fa-circle me-2"></i>
+            <div>
+              <strong>{{ blackPlayer.name || "Black" }}</strong>
+              <span *ngIf="blackPlayer.rating">({{ blackPlayer.rating }})</span>
+            </div>
           </div>
         </div>
+
         <div class="d-flex justify-content-between mt-1">
-          <div class="player-info">
-            <strong>{{ whitePlayer.name || "White" }}</strong> ({{ whitePlayer.rating }})
+          <!-- White Player Info -->
+          <div class="player-info d-flex align-items-center">
+            <i class="fa-regular fa-circle me-2"></i>
+            <div>
+              <strong>{{ whitePlayer.name || "White" }}</strong>
+              <span *ngIf="whitePlayer.rating">({{ whitePlayer.rating }})</span>
+            </div>
           </div>
         </div>
+
         <div class="game-details text-center mt-2">
-          <div>{{ gameFormat || "Blitz" }} • {{ timeControl || "3+2" }}</div>
+          <div *ngIf="isAuthenticated">{{ gameFormat || "Blitz" }} • {{ timeControl || "3+2" }}</div>
           <div>Result: <strong>{{ result || "Ongoing" }}</strong></div>
-          <div>Termination: {{ termination || "Normal" }}</div>
-          <div *ngIf="bestMove">Best Move: <strong>{{ bestMove }}</strong></div>
+          <div *ngIf="gameDate && !isAuthenticated">Game Date: {{ gameDate | date: 'MMM d, y' }}</div>
+          <div *ngIf="isAuthenticated">Termination: {{ termination || "Normal" }}</div>
+          <div *ngIf="bestMove && isAuthenticated">Best Move: <strong>{{ bestMove }}</strong></div>
         </div>
       </div>
 
-      <div class="notes-section bg-light p-3">
-        <textarea class="form-control" placeholder="Type private notes here" rows="8"></textarea>
+      <!-- Notes Section or Game Info -->
+      <div class="bg-light p-3">
+        <!-- Notes section for authenticated users -->
+        <textarea *ngIf="isAuthenticated" class="form-control" placeholder="Type private notes here" rows="8"></textarea>
+      
+        <!-- Game summary and advertisement for non-authenticated users -->
+        <div *ngIf="!isAuthenticated" class="game-summary">
+          <h6>Game Summary:</h6>
+          <p>
+            This iconic chess game was played on {{ gameDate | date: 'MMM d, y' }} and resulted in a stunning victory for Frank Marshall. It is known for its exciting and bold sacrifices.
+          </p>
+          <!-- Advertisement for login and analysis tools -->
+          <div class="login-advert text-center mt-3 p-3 border rounded bg-light">
+            <h6 class="text-info">Want to Analyze Your Own Games?</h6>
+            <p>
+              This is just a demo! Log in to upload your own PGN files and use our powerful analysis tools to review your games in detail.
+            </p>
+            <a class="btn btn-primary" routerLink="/login">Log In Now</a>
+          </div>
+        </div>
       </div>
+      
     </div>
 
     <!-- Chessboard Column (Center) -->
