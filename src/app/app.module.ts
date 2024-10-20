@@ -8,11 +8,10 @@ import { AppComponent } from './app.component';
 import { LoginComponent } from './components/auth/login/login.component';
 import { RegisterComponent } from './components/auth/register/register.component';
 import { ChessBoardComponent } from './components/chess-board/chess-board.component';
+import { MoveListComponent } from './components/chess-board/move-list/move-list.component';
 import { DashboardComponent } from './components/chess-game/dashboard/dashboard.component';
 import { GameListComponent } from './components/chess-game/game-list/game-list.component';
 import { AuthInterceptor } from './interceptors/auth.interceptor';
-import { PlayerStripComponent } from './components/chess-board/player-strip/player-strip.component';
-import { MoveListComponent } from './components/chess-board/move-list/move-list.component';
 
 
 
@@ -24,7 +23,6 @@ import { MoveListComponent } from './components/chess-board/move-list/move-list.
     DashboardComponent,
     ChessBoardComponent,
     GameListComponent,
-    PlayerStripComponent,
     MoveListComponent,
   ],
   imports: [

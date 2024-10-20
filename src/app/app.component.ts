@@ -9,7 +9,7 @@ import { AuthService } from './services/auth.service';
 })
 export class AppComponent {
   title = 'ChessMasterApp'; // Set the app title
-  isAuthenticated = false; // Track if the user is authenticated
+  isAuthenticated = false;
 
   constructor(private authService: AuthService, private router: Router) {}
 

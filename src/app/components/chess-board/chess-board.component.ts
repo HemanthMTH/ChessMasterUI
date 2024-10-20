@@ -9,9 +9,9 @@ import {
 import { ActivatedRoute } from '@angular/router';
 import { Chessground } from 'chessground';
 import { Key, MoveData, Opts, Path, PgnViewer, Player } from 'pgn-viewer';
-import { debounceTime, fromEvent, of, switchMap } from 'rxjs';
 import { AnalyzeRequest } from 'src/app/models/analyze-request';
-import { ChessGame } from 'src/app/models/chess-game';
+import { ChessGame, ChessGameParser } from 'src/app/models/chess-game';
+import { AuthService } from 'src/app/services/auth.service';
 import { ChessGameService } from '../../services/chess-game.service';
 
 @Component({
@@ -22,7 +22,25 @@ import { ChessGameService } from '../../services/chess-game.service';
 export class ChessBoardComponent implements AfterViewInit {
   @ViewChild('boardContainer', { static: false }) boardContainer!: ElementRef;
   viewer!: PgnViewer;
-  pgn: string | null = null; // Store PGN for the game
+  pgn: string | null = null;
+  famousGamePGN: string = `[Event "18th DSB Kongress"]
+                          [Site "Breslau GER"]
+                          [Date "1912.07.20"]
+                          [EventDate "1912.07.15"]
+                          [Round "6"]
+                          [Result "0-1"]
+                          [White "Stefan Levitsky"]
+                          [Black "Frank James Marshall"]
+                          [ECO "B23"]
+                          [WhiteElo "?"]
+                          [BlackElo "?"]
+                          [PlyCount "46"]
+
+                          1.d4 e6 2.e4 d5 3.Nc3 c5 4.Nf3 Nc6 5.exd5 exd5 6.Be2 Nf6 7.O-O
+                          Be7 8.Bg5 O-O 9.dxc5 Be6 10.Nd4 Bxc5 11.Nxe6 fxe6 12.Bg4 Qd6
+                          13.Bh3 Rae8 14.Qd2 Bb4 15.Bxf6 Rxf6 16.Rad1 Qc5 17.Qe2 Bxc3
+                          18.bxc3 Qxc3 19.Rxd5 Nd4 20.Qh5 Ref8 21.Re5 Rh6 22.Qg5 Rxh3
+                          23.Rc5 Qg3 0-1'`;
   moves: Array<[MoveData, MoveData?]> = [];
   blackPlayer: Player = { isLichessUser: false };
   whitePlayer: Player = { isLichessUser: false };
@@ -36,32 +54,50 @@ export class ChessBoardComponent implements AfterViewInit {
   chessground!: ReturnType<typeof Chessground>;
   bestMove!: string;
   game!: ChessGame;
+  isFamousGame = false;
+  isAuthenticated = false;
 
   constructor(
     private route: ActivatedRoute,
     private chessGameService: ChessGameService,
     private renderer: Renderer2,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private authService: AuthService,
   ) {}
 
   ngAfterViewInit(): void {
     this.route.params.subscribe((params) => {
       const gameId = params['id'];
+      this.isFamousGame = gameId === 'FAMOUS_GAME_ID';
+      if (this.isFamousGame){
+        localStorage.setItem('demoPGN', this.famousGamePGN);
+      }
       this.fetchGame(gameId);
+    });
+
+    this.authService.isAuthenticated$.subscribe(isAuth => {
+      this.isAuthenticated = isAuth;
     });
 
     this.addKeyboardListeners();
   }
 
   async fetchGame(gameId: string) {
-    const game = await this.chessGameService.getGame(gameId).toPromise();
-    if (game){
-      this.game = game;
-      this.pgn = game.pgn
+    const storedPgn = localStorage.getItem('demoPGN');
+    if (storedPgn) {
+      this.pgn = storedPgn;
+      this.game = ChessGameParser.parsePgnMetadata(storedPgn, 'GUEST');
+      console.log(this.game)
+    } else {
+      const game = await this.chessGameService.getGame(gameId).toPromise();
+      if (game) {
+        this.game = game;
+        this.pgn = game.pgn;
+      } else {
+        console.error('Unable to get the game');
+      }
     }
-    else{
-      console.error('Unable to get the game');
-    }
+
     this.initializeChessBoard(); // Initialize the chessboard with the fetched PGN
     this.blackPlayer = this.viewer.game.players.black;
     this.whitePlayer = this.viewer.game.players.white;
@@ -71,7 +107,8 @@ export class ChessBoardComponent implements AfterViewInit {
       this.timeControlInitial = this.viewer.game.metadata.timeControl.initial
         ? this.viewer.game.metadata.timeControl.initial / 60
         : undefined;
-      this.timeControlIncrement = this.viewer.game.metadata.timeControl.increment
+      this.timeControlIncrement = this.viewer.game.metadata.timeControl
+        .increment
         ? this.viewer.game.metadata.timeControl.increment
         : undefined;
     }
@@ -140,7 +177,7 @@ export class ChessBoardComponent implements AfterViewInit {
   drawBestMoveArrow(bestMove: string) {
     if (bestMove) {
       const from = bestMove.slice(0, 2) as Key; // Starting square of best move
-      const to = bestMove.slice(2, 4) as Key;   // Destination square of best move
+      const to = bestMove.slice(2, 4) as Key; // Destination square of best move
 
       // Set an arrow on the board using Chessground's setShapes method
       this.chessground.setShapes([
@@ -153,7 +190,7 @@ export class ChessBoardComponent implements AfterViewInit {
   onMoveClicked(movePath: string) {
     if (movePath) {
       const path = new Path(movePath);
-      this.getBestMove(this.getCurrentFEN(this.viewer)).then(bestMove => {
+      this.getBestMove(this.getCurrentFEN(this.viewer)).then((bestMove) => {
         this.bestMove = bestMove;
         this.drawBestMoveArrow(bestMove);
       });
@@ -215,7 +252,7 @@ export class ChessBoardComponent implements AfterViewInit {
   goTo(position: 'first' | 'prev' | 'next' | 'last') {
     this.viewer.goTo(position);
     const fen = this.getCurrentFEN(this.viewer);
-    this.getBestMove(fen).then(bestMove => {
+    this.getBestMove(fen).then((bestMove) => {
       this.bestMove = bestMove;
       this.drawBestMoveArrow(bestMove);
     });
@@ -228,9 +265,11 @@ export class ChessBoardComponent implements AfterViewInit {
 
   async getBestMove(currentFen: string): Promise<string> {
     try {
-      const analyzeRequest = new AnalyzeRequest(this.game.id, currentFen)
-      const response = await this.chessGameService.analyzePosition(analyzeRequest).toPromise();
-      console.log(response?.bestMove, response?.currentFen)
+      const analyzeRequest = new AnalyzeRequest(this.game.id, currentFen);
+      const response = await this.chessGameService
+        .analyzePosition(analyzeRequest)
+        .toPromise();
+      console.log(response?.bestMove, response?.currentFen);
       return response?.bestMove || 'No Best Move Found';
     } catch (error) {
       console.error('Error fetching the best move:', error);

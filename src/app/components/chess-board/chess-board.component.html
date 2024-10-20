@@ -1,8 +1,17 @@
 <div class="container-fluid h-100">
+  <div *ngIf="!isAuthenticated" class="famous-game-trivia">
+    <h5>Famous Game: Marshall's Immortal</h5>
+    <p>
+      Played in 1912 between Frank Marshall and Stefan Levitsky, this game
+      is known for the spectacular queen sacrifice, which left the
+      audience showering gold coins on the board!
+    </p>
+  </div>
   <div class="row h-100">
     <!-- Game Info Column (Left) -->
     <div class="col-md-3 d-flex flex-column justify-content-between game-info-notes-wrapper">
       <div class="game-info-section p-3 bg-light">
+        
         <div class="d-flex justify-content-between">
           <div class="player-info">
             <strong>{{ blackPlayer.name || "Black" }}</strong> ({{ blackPlayer.rating }})
@@ -14,10 +23,10 @@
           </div>
         </div>
         <div class="game-details text-center mt-2">
-          <div>{{ gameFormat || "Blitz" }} • {{ timeControl || "3+2" }}</div>
+          <div *ngIf="isAuthenticated">{{ gameFormat || "Blitz" }} • {{ timeControl || "3+2" }}</div>
           <div>Result: <strong>{{ result || "Ongoing" }}</strong></div>
-          <div>Termination: {{ termination || "Normal" }}</div>
-          <div *ngIf="bestMove">Best Move: <strong>{{ bestMove }}</strong></div>
+          <div *ngIf="isAuthenticated">Termination: {{ termination || "Normal" }}</div>
+          <div *ngIf="bestMove && isAuthenticated">Best Move: <strong>{{ bestMove }}</strong></div>
         </div>
       </div>
 

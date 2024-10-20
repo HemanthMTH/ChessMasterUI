@@ -7,13 +7,15 @@ import { DashboardComponent } from './components/chess-game/dashboard/dashboard.
 import { GameListComponent } from './components/chess-game/game-list/game-list.component';
 import { AuthGuard } from './guards/auth.guard';
 
+const famousGameId = 'FAMOUS_GAME_ID';
+
 const routes: Routes = [
   { path: 'login', component: LoginComponent },
   { path: 'register', component: RegisterComponent },
   { path: 'upload', component: DashboardComponent, canActivate: [AuthGuard] },
   { path: 'dashboard', component: GameListComponent, canActivate: [AuthGuard] },
   { path: 'game/:id', component: ChessBoardComponent, canActivate: [AuthGuard] },  // Route for chess board with game ID
-  { path: '', redirectTo: '/login', pathMatch: 'full' }
+  { path: '', component: ChessBoardComponent, data: { id: famousGameId } }
 ];
 
 @NgModule({
