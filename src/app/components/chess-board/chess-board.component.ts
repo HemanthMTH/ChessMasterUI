@@ -68,14 +68,16 @@ export class ChessBoardComponent implements AfterViewInit {
   ngAfterViewInit(): void {
     this.route.params.subscribe((params) => {
       const gameId = params['id'];
-
-      this.fetchGame(gameId).then(() => {
-        this.cdr.detectChanges();
-      });
+      if (gameId === 'FAMOUS_GAME_ID') {
+        this.loadFamousGame();
+      } else {
+        this.fetchGame(gameId).then(() => {
+          this.cdr.detectChanges();
+        });
+      }
     });
 
     this.checkAuthentication();
-
     this.addKeyboardListeners();
   }
 
@@ -86,25 +88,57 @@ export class ChessBoardComponent implements AfterViewInit {
     });
   }
 
+  loadFamousGame() {
+    this.pgn = this.famousGamePGN;
+    this.game = ChessGameParser.parsePgnMetadata(this.pgn, 'GUEST');
+    this.gameDate = this.game.gameDate!;
+    this.initializeChessBoard();
+  }
+
   async fetchGame(gameId: string) {
-    const storedPgn = localStorage.getItem('demoPGN');
-    if (storedPgn) {
-      this.pgn = storedPgn;
-      this.game = ChessGameParser.parsePgnMetadata(storedPgn, 'GUEST');
-      if (this.game.gameDate) {
-        this.gameDate = this.game.gameDate;
-      }
-    } else {
+    try {
       const game = await this.chessGameService.getGame(gameId).toPromise();
       if (game) {
         this.game = game;
         this.pgn = game.pgn;
+        this.gameDate = this.game.gameDate!;
       } else {
         console.error('Unable to get the game');
       }
+      this.initializeChessBoard();
+    } catch (error) {
+      console.error('Error fetching game:', error);
+    }
+  }
+
+  initializeChessBoard() {
+    const opts: Opts = {
+      pgn: this.pgn!,
+    };
+
+    this.viewer = new PgnViewer(opts);
+    this.chessground = Chessground(this.boardContainer.nativeElement, {
+      viewOnly: false,
+      draggable: { enabled: true, showGhost: true },
+      movable: {
+        color: 'both',
+        free: false,
+        showDests: true,
+        events: {
+          after: (orig: Key, dest: Key) => this.onMove(orig, dest),
+        },
+      },
+      highlight: { lastMove: true, check: true },
+      animation: { enabled: true, duration: 200 },
+    });
+
+    this.viewer.setGround(this.chessground);
+    if (this.isAuthenticated) {
+      this.viewer.goTo('last');
+    } else {
+      this.viewer.goTo('first');
     }
 
-    this.initializeChessBoard();
     this.blackPlayer = this.viewer.game.players.black;
     this.whitePlayer = this.viewer.game.players.white;
     this.result = this.viewer.game.metadata.result;
@@ -122,45 +156,11 @@ export class ChessBoardComponent implements AfterViewInit {
       this.timeControlIncrement || '0'
     }`;
 
-    // Fetch and display the best move
     const currentFen = this.getCurrentFEN(this.viewer);
-    this.bestMove = await this.getBestMove(currentFen);
-    this.drawBestMoveArrow(this.bestMove);
-  }
-
-  initializeChessBoard() {
-    const opts: Opts = {
-      pgn: this.pgn!,
-    };
-
-    this.viewer = new PgnViewer(opts);
-
-    const legalDestinations = new Map<Key, Key[]>();
-
-    this.chessground = Chessground(this.boardContainer.nativeElement, {
-      viewOnly: false,
-      draggable: { enabled: true, showGhost: true },
-      movable: {
-        color: 'both',
-        free: false,
-        showDests: true,
-        dests: legalDestinations, // Define legal moves here
-        rookCastle: true,
-        events: {
-          after: (orig: Key, dest: Key) => this.onMove(orig, dest),
-        },
-      },
-      highlight: { lastMove: true, check: true },
-      animation: { enabled: true, duration: 200 },
+    this.getBestMove(currentFen).then((bestMove) => {
+      this.bestMove = bestMove;
+      this.drawBestMoveArrow(bestMove);
     });
-
-    this.viewer.setGround(this.chessground);
-    this.checkAuthentication();
-    if (this.isAuthenticated) {
-      this.viewer.goTo('last');
-    } else {
-      this.viewer.goTo('first');
-    }
 
     this.renderMoves();
     this.addMoveClickListeners();
@@ -171,32 +171,26 @@ export class ChessBoardComponent implements AfterViewInit {
     const move = this.viewer.game.mainline.find((m) => m.uci === uci);
 
     if (move) {
-      // Move found in the PGN, update the board and viewer
       this.viewer.toPath(new Path(move.path.path));
       this.viewer.ground?.move(orig, dest);
       this.renderMoves();
 
-      // Get and display the best move after this move
       const currentFen = this.getCurrentFEN(this.viewer);
       this.bestMove = await this.getBestMove(currentFen);
-      this.drawBestMoveArrow(this.bestMove); // Draw arrow for the new best move
+      this.drawBestMoveArrow(this.bestMove);
     } else {
       console.error('Invalid move');
     }
   }
 
-  // Method to draw arrows for the best move
   drawBestMoveArrow(bestMove: string) {
     if (bestMove) {
-      const from = bestMove.slice(0, 2) as Key; // Starting square of best move
-      const to = bestMove.slice(2, 4) as Key; // Destination square of best move
-
-      // Set an arrow on the board using Chessground's setShapes method
+      const from = bestMove.slice(0, 2) as Key;
+      const to = bestMove.slice(2, 4) as Key;
       this.chessground.setShapes([{ orig: from, dest: to, brush: 'green' }]);
     }
   }
 
-  // Handle move click and navigate the board to that move
   onMoveClicked(movePath: string) {
     if (movePath) {
       const path = new Path(movePath);
@@ -204,7 +198,7 @@ export class ChessBoardComponent implements AfterViewInit {
         this.bestMove = bestMove;
         this.drawBestMoveArrow(bestMove);
       });
-      this.viewer.toPath(path); // Navigate the viewer to the clicked move's position
+      this.viewer.toPath(path);
       this.selectedMovePath = movePath;
       this.cdr.detectChanges();
     }
@@ -214,20 +208,18 @@ export class ChessBoardComponent implements AfterViewInit {
     const moves: Array<[MoveData, MoveData?]> = [];
     let pair: [MoveData, MoveData?] | undefined = undefined;
 
-    // Loop through the moves and group them as [whiteMove, blackMove]
     this.viewer.game.mainline.forEach((move: MoveData, index: number) => {
       if (index % 2 === 0) {
-        pair = [move]; // White's move
+        pair = [move];
       } else if (pair) {
-        pair.push(move); // Black's move
-        moves.push(pair); // Push the complete pair
-        pair = undefined; // Reset for the next pair
+        pair.push(move);
+        moves.push(pair);
+        pair = undefined;
       }
     });
 
-    // Handle odd number of moves (if only White's move exists)
     if (pair) {
-      moves.push([pair[0]]); // Only push the white move
+      moves.push([pair[0]]);
     }
 
     this.moves = moves;
@@ -242,12 +234,11 @@ export class ChessBoardComponent implements AfterViewInit {
         const pathStr = moveElement.getAttribute('id').replace('move-', '');
         const path = new Path(pathStr);
         this.viewer.toPath(path);
-        this.renderMoves(); // Re-render the moves and update the board position
+        this.renderMoves();
       });
     });
   }
 
-  // Keyboard navigation for next and previous moves
   addKeyboardListeners() {
     window.addEventListener('keydown', (event: KeyboardEvent) => {
       if (event.key === 'ArrowRight') {
@@ -258,11 +249,9 @@ export class ChessBoardComponent implements AfterViewInit {
     });
   }
 
-  // Navigate through the game using controls (First, Previous, Next, Last)
   goTo(position: 'first' | 'prev' | 'next' | 'last') {
     this.viewer.goTo(position);
     const fen = this.getCurrentFEN(this.viewer);
-
     this.getBestMove(fen).then((bestMove) => {
       this.bestMove = bestMove;
       this.drawBestMoveArrow(bestMove);
@@ -281,14 +270,12 @@ export class ChessBoardComponent implements AfterViewInit {
         const response = await this.chessGameService
           .analyzePosition(analyzeRequest)
           .toPromise();
-
         return response?.bestMove || 'No Best Move Found';
       } catch (error) {
         console.error('Error fetching the best move:', error);
         return 'Error retrieving best move';
       }
     }
-    // Return a default message if not authenticated
     return 'Authentication required to get the best move';
   }
 }
