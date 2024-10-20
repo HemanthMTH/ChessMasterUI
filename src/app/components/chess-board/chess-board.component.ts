@@ -55,7 +55,6 @@ export class ChessBoardComponent implements AfterViewInit {
   chessground!: ReturnType<typeof Chessground>;
   bestMove!: string;
   game!: ChessGame;
-  isFamousGame = false;
   isAuthenticated = false;
 
   constructor(
@@ -69,18 +68,22 @@ export class ChessBoardComponent implements AfterViewInit {
   ngAfterViewInit(): void {
     this.route.params.subscribe((params) => {
       const gameId = params['id'];
-      this.isFamousGame = gameId === 'FAMOUS_GAME_ID';
-      if (this.isFamousGame) {
-        localStorage.setItem('demoPGN', this.famousGamePGN);
-      }
-      this.fetchGame(gameId);
+
+      this.fetchGame(gameId).then(() => {
+        this.cdr.detectChanges();
+      });
     });
 
-    this.authService.isAuthenticated$.subscribe((isAuth) => {
-      this.isAuthenticated = isAuth;
-    });
+    this.checkAuthentication();
 
     this.addKeyboardListeners();
+  }
+
+  checkAuthentication(): void {
+    this.authService.isAuthenticated$.subscribe((isAuth) => {
+      this.isAuthenticated = isAuth;
+      this.cdr.detectChanges();
+    });
   }
 
   async fetchGame(gameId: string) {
@@ -101,7 +104,7 @@ export class ChessBoardComponent implements AfterViewInit {
       }
     }
 
-    this.initializeChessBoard(); // Initialize the chessboard with the fetched PGN
+    this.initializeChessBoard();
     this.blackPlayer = this.viewer.game.players.black;
     this.whitePlayer = this.viewer.game.players.white;
     this.result = this.viewer.game.metadata.result;
@@ -122,7 +125,7 @@ export class ChessBoardComponent implements AfterViewInit {
     // Fetch and display the best move
     const currentFen = this.getCurrentFEN(this.viewer);
     this.bestMove = await this.getBestMove(currentFen);
-    this.drawBestMoveArrow(this.bestMove); // Draw the arrow for the best move
+    this.drawBestMoveArrow(this.bestMove);
   }
 
   initializeChessBoard() {
@@ -152,7 +155,13 @@ export class ChessBoardComponent implements AfterViewInit {
     });
 
     this.viewer.setGround(this.chessground);
-    this.viewer.goTo('last');
+    this.checkAuthentication();
+    if (this.isAuthenticated) {
+      this.viewer.goTo('last');
+    } else {
+      this.viewer.goTo('first');
+    }
+
     this.renderMoves();
     this.addMoveClickListeners();
   }
@@ -163,9 +172,9 @@ export class ChessBoardComponent implements AfterViewInit {
 
     if (move) {
       // Move found in the PGN, update the board and viewer
-      this.viewer.toPath(new Path(move.path.path)); // Update PGN viewer path
-      this.viewer.ground?.move(orig, dest); // Update chessboard
-      this.renderMoves(); // Refresh the move list
+      this.viewer.toPath(new Path(move.path.path));
+      this.viewer.ground?.move(orig, dest);
+      this.renderMoves();
 
       // Get and display the best move after this move
       const currentFen = this.getCurrentFEN(this.viewer);
@@ -183,9 +192,7 @@ export class ChessBoardComponent implements AfterViewInit {
       const to = bestMove.slice(2, 4) as Key; // Destination square of best move
 
       // Set an arrow on the board using Chessground's setShapes method
-      this.chessground.setShapes([
-        { orig: from, dest: to, brush: 'green' }, // Drawing a green arrow for the best move
-      ]);
+      this.chessground.setShapes([{ orig: from, dest: to, brush: 'green' }]);
     }
   }
 
@@ -198,8 +205,8 @@ export class ChessBoardComponent implements AfterViewInit {
         this.drawBestMoveArrow(bestMove);
       });
       this.viewer.toPath(path); // Navigate the viewer to the clicked move's position
-      this.selectedMovePath = movePath; // Highlight the selected move
-      this.cdr.detectChanges(); // Update the view
+      this.selectedMovePath = movePath;
+      this.cdr.detectChanges();
     }
   }
 
@@ -244,9 +251,9 @@ export class ChessBoardComponent implements AfterViewInit {
   addKeyboardListeners() {
     window.addEventListener('keydown', (event: KeyboardEvent) => {
       if (event.key === 'ArrowRight') {
-        this.goTo('next'); // Navigate to the next move
+        this.goTo('next');
       } else if (event.key === 'ArrowLeft') {
-        this.goTo('prev'); // Navigate to the previous move
+        this.goTo('prev');
       }
     });
   }
@@ -255,6 +262,7 @@ export class ChessBoardComponent implements AfterViewInit {
   goTo(position: 'first' | 'prev' | 'next' | 'last') {
     this.viewer.goTo(position);
     const fen = this.getCurrentFEN(this.viewer);
+
     this.getBestMove(fen).then((bestMove) => {
       this.bestMove = bestMove;
       this.drawBestMoveArrow(bestMove);
@@ -267,16 +275,20 @@ export class ChessBoardComponent implements AfterViewInit {
   }
 
   async getBestMove(currentFen: string): Promise<string> {
-    try {
-      const analyzeRequest = new AnalyzeRequest(this.game.id, currentFen);
-      const response = await this.chessGameService
-        .analyzePosition(analyzeRequest)
-        .toPromise();
-      console.log(response?.bestMove, response?.currentFen);
-      return response?.bestMove || 'No Best Move Found';
-    } catch (error) {
-      console.error('Error fetching the best move:', error);
-      return 'Error retrieving best move';
+    if (this.isAuthenticated) {
+      try {
+        const analyzeRequest = new AnalyzeRequest(this.game.id, currentFen);
+        const response = await this.chessGameService
+          .analyzePosition(analyzeRequest)
+          .toPromise();
+
+        return response?.bestMove || 'No Best Move Found';
+      } catch (error) {
+        console.error('Error fetching the best move:', error);
+        return 'Error retrieving best move';
+      }
     }
+    // Return a default message if not authenticated
+    return 'Authentication required to get the best move';
   }
 }
