@@ -51,6 +51,7 @@ export class ChessBoardComponent implements AfterViewInit {
   timeControlIncrement!: number | undefined;
   timeControl!: string;
   termination!: string;
+  gameDate!: Date;
   chessground!: ReturnType<typeof Chessground>;
   bestMove!: string;
   game!: ChessGame;
@@ -62,20 +63,20 @@ export class ChessBoardComponent implements AfterViewInit {
     private chessGameService: ChessGameService,
     private renderer: Renderer2,
     private cdr: ChangeDetectorRef,
-    private authService: AuthService,
+    private authService: AuthService
   ) {}
 
   ngAfterViewInit(): void {
     this.route.params.subscribe((params) => {
       const gameId = params['id'];
       this.isFamousGame = gameId === 'FAMOUS_GAME_ID';
-      if (this.isFamousGame){
+      if (this.isFamousGame) {
         localStorage.setItem('demoPGN', this.famousGamePGN);
       }
       this.fetchGame(gameId);
     });
 
-    this.authService.isAuthenticated$.subscribe(isAuth => {
+    this.authService.isAuthenticated$.subscribe((isAuth) => {
       this.isAuthenticated = isAuth;
     });
 
@@ -87,7 +88,9 @@ export class ChessBoardComponent implements AfterViewInit {
     if (storedPgn) {
       this.pgn = storedPgn;
       this.game = ChessGameParser.parsePgnMetadata(storedPgn, 'GUEST');
-      console.log(this.game)
+      if (this.game.gameDate) {
+        this.gameDate = this.game.gameDate;
+      }
     } else {
       const game = await this.chessGameService.getGame(gameId).toPromise();
       if (game) {
