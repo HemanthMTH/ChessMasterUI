@@ -6,6 +6,7 @@ import { ChessBoardComponent } from './components/chess-board/chess-board.compon
 import { DashboardComponent } from './components/chess-game/dashboard/dashboard.component';
 import { GameListComponent } from './components/chess-game/game-list/game-list.component';
 import { AuthGuard } from './guards/auth.guard';
+import { RedirectGuard } from './guards/redirect.guard';
 
 const famousGameId = 'FAMOUS_GAME_ID';
 
@@ -14,9 +15,11 @@ const routes: Routes = [
   { path: 'register', component: RegisterComponent },
   { path: 'upload', component: DashboardComponent, canActivate: [AuthGuard] },
   { path: 'dashboard', component: GameListComponent, canActivate: [AuthGuard] },
-  { path: 'game/:id', component: ChessBoardComponent, canActivate: [AuthGuard] },  // Route for chess board with game ID
-  { path: '', component: ChessBoardComponent, data: { id: famousGameId } }
+  { path: 'game/:id', component: ChessBoardComponent, canActivate: [AuthGuard] }, 
+  { path: '', redirectTo: 'redirect', pathMatch: 'full' },  // Temporary redirect to handle in the guard
+  { path: 'redirect', canActivate: [RedirectGuard], component: ChessBoardComponent }, 
 ];
+
 
 @NgModule({
   imports: [RouterModule.forRoot(routes)],

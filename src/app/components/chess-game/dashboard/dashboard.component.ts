@@ -10,9 +10,12 @@ import { ChessGameService } from '../../../services/chess-game.service';
 export class DashboardComponent {
   pgnFile: File | null = null;
   isLoading = false;
-   // Store FEN for chessboard
+  // Store FEN for chessboard
 
-  constructor(private chessGameService: ChessGameService, private router: Router) {}
+  constructor(
+    private chessGameService: ChessGameService,
+    private router: Router
+  ) {}
 
   onFileSelected(event: any) {
     this.pgnFile = event.target.files[0];
@@ -23,7 +26,6 @@ export class DashboardComponent {
       this.isLoading = true;
       this.chessGameService.uploadGameFile(this.pgnFile).subscribe(
         (res: ChessGame) => {
-          console.log('Game uploaded:', res);
           this.isLoading = false;
           this.router.navigate(['/dashboard']);
         },
